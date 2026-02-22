@@ -7,11 +7,21 @@ from repositories.category_repository import CategoryRepository
 class SalesDistributionService:
 
     @staticmethod
-    def calculate():
+    def calculate(target_month):
 
         staff_list = StaffRepository.load_all()
-        sales_list = SalesRepository.load_all()
         category_master = CategoryRepository.load()
+
+        # 🔥 月フィルタで取得する
+        # -----------------------------
+        sales_list = []
+
+        for staff in staff_list:
+            staff_sales = SalesRepository.find_by_staff_and_month(
+                staff.id,
+                target_month
+            )
+            sales_list.extend(staff_sales)
 
         # --------------------------------------
         # ① 個人売上金額（カテゴリ別も保持）
@@ -55,7 +65,7 @@ class SalesDistributionService:
 
             for parent_id in child.parents:
                 children_sales_f[parent_id] += share
-        
+
         # --------------------------------------
         # ③-2 子の売上金額を均等分配
         # --------------------------------------
@@ -74,20 +84,8 @@ class SalesDistributionService:
             for parent_id in child.parents:
                 children_sales_amount[parent_id] += share
 
-
         # --------------------------------------
-        # ④ 組織売上F
-        # --------------------------------------
-        result = {}
-
-        for staff in staff_list:
-            sid = staff.id
-
-            pf = personal_sales_f.get(sid, 0)
-            cf = children_sales_f.get(sid, 0)
-
-                    # --------------------------------------
-        # ④ 組織売上F ＋ 組織売上金額
+        # ④ 組織売上まとめ
         # --------------------------------------
         result = {}
 
@@ -96,7 +94,6 @@ class SalesDistributionService:
 
             pf = personal_sales_f.get(sid, 0)
             cf = children_sales_f.get(sid, 0)
-
             pa = personal_sales_amount.get(sid, 0)
             ca = children_sales_amount.get(sid, 0)
 

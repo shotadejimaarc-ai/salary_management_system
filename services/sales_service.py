@@ -6,7 +6,8 @@ class SalesService:
     @staticmethod
     def get_monthly_sales_summary_by_staff(staff_id, target_month):
 
-        distribution = SalesDistributionService.calculate()
+        # 🔥 月を渡す
+        distribution = SalesDistributionService.calculate(target_month)
 
         staff_data = distribution.get(staff_id, {})
 
