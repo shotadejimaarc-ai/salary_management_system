@@ -12,6 +12,7 @@ st.set_page_config(
     initial_sidebar_state="expanded"
 )
 
+
 # ==================================
 # DB初期化
 # ==================================
@@ -80,9 +81,12 @@ if not st.session_state.logged_in:
 # ==================================
 # ログイン後（完全SaaSルーター）
 # ==================================
+# ==================================
+# ログイン後
+# ==================================
 else:
 
-    from ui.layout import sidebar
+    from ui.layout import render_layout
     from modules import (
         sales_csv,
         sales_analysis,
@@ -94,33 +98,34 @@ else:
         salary_explanation
     )
 
-    # サイドバー描画
-    sidebar()
+    # レイアウト生成
+    main_container = render_layout()
 
     page = st.session_state.page
 
-    # ルーティング
-    if page == "sales_csv":
-        sales_csv.main()
+    # 🔥 ここ重要：インデントをこの中に入れる
+    with main_container:
 
-    elif page == "sales_analysis":
-        sales_analysis.main()
+        if page == "sales_csv":
+            sales_csv.main()
 
-    elif page == "salary":
-        salary.main()
+        elif page == "sales_analysis":
+            sales_analysis.main()
 
-    elif page == "transfer":
-        transfer.main()
+        elif page == "salary":
+            salary.main()
 
-    elif page == "staff_master":
-        staff_master.main()
+        elif page == "transfer":
+            transfer.main()
 
-    elif page == "salary_rules":
-        salary_rules.main()
+        elif page == "staff_master":
+            staff_master.main()
 
-    elif page == "bank_master":
-        bank_master.main()
-    
-    elif page == "salary_explanation":
-        salary_explanation.main()
-    
+        elif page == "salary_rules":
+            salary_rules.main()
+
+        elif page == "bank_master":
+            bank_master.main()
+
+        elif page == "salary_explanation":
+            salary_explanation.main()
