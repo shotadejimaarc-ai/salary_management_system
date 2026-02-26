@@ -1,7 +1,8 @@
 import json
 import os
 
-FILE_PATH = "category_master.json"
+FILE_PATH = "data/category_master.json"
+
 
 class CategoryRepository:
 
@@ -15,9 +16,7 @@ class CategoryRepository:
 
     @staticmethod
     def save(data):
+        os.makedirs("data", exist_ok=True)
+
         with open(FILE_PATH, "w", encoding="utf-8") as f:
             json.dump(data, f, ensure_ascii=False, indent=2)
-
-
-
-    

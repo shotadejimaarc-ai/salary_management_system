@@ -1,0 +1,54 @@
+{
+  "チャージ": {
+    "drink_back_flg": 0,
+    "rate": 0.25
+  },
+  "飲み放題": {
+    "drink_back_flg": 0,
+    "rate": 0.25
+  },
+  "ビール": {
+    "drink_back_flg": 0,
+    "rate": 0.25
+  },
+  "ウィスキー": {
+    "drink_back_flg": 0,
+    "rate": 0.25
+  },
+  "ジン": {
+    "drink_back_flg": 0,
+    "rate": 0.25
+  },
+  "ウォッカ": {
+    "drink_back_flg": 0,
+    "rate": 0.25
+  },
+  "焼酎": {
+    "drink_back_flg": 0,
+    "rate": 0.25
+  },
+  "ワイン": {
+    "drink_back_flg": 0,
+    "rate": 0.25
+  },
+  "ショット": {
+    "drink_back_flg": 0,
+    "rate": 0.25
+  },
+  "ソフトドリンク": {
+    "drink_back_flg": 0,
+    "rate": 0.25
+  },
+  "キャストドリンク": {
+    "drink_back_flg": 0,
+    "rate": 0.3
+  },
+  "シャンパン": {
+    "drink_back_flg": 0,
+    "rate": 0.3
+  },
+  "フード": {
+    "drink_back_flg": 0,
+    "rate": 0.25
+  }
+}

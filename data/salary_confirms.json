@@ -1,41 +1,5 @@
 [
   {
-    "staff_id": "1771527354176",
-    "month": "2026-02",
-    "total": 2475.0,
-    "status": "confirmed"
-  },
-  {
-    "staff_id": "1771527161676",
-    "month": "2026-02",
-    "total": 148760,
-    "status": "confirmed"
-  },
-  {
-    "staff_id": "1771527161676",
-    "month": "2026-01",
-    "total": 148760,
-    "status": "confirmed"
-  },
-  {
-    "staff_id": "1771527354176",
-    "month": "2026-01",
-    "total": 96078,
-    "status": "confirmed"
-  },
-  {
-    "staff_id": "1771527377990",
-    "month": "2026-01",
-    "total": 92654,
-    "status": "confirmed"
-  },
-  {
-    "staff_id": "1771527428191",
-    "month": "2026-01",
-    "total": 21741,
-    "status": "confirmed"
-  },
-  {
     "staff_id": "1771527459634",
     "month": "2026-01",
     "total": -2000,
@@ -55,30 +19,9 @@
   },
   {
     "staff_id": "1771527685394",
-    "year": 2026,
-    "month": "2026-02",
-    "total": 500,
-    "status": "confirmed"
-  },
-  {
-    "staff_id": "1771527685394",
-    "year": 2026,
-    "month": "2026-01",
-    "total": 500,
-    "status": "confirmed"
-  },
-  {
-    "staff_id": "1771527685394",
     "year": 2025,
     "month": "2025-12",
     "total": 500,
-    "status": "confirmed"
-  },
-  {
-    "staff_id": "1771527161676",
-    "year": 2025,
-    "month": "2025-12",
-    "total": 148760,
     "status": "confirmed"
   },
   {
@@ -86,6 +29,13 @@
     "year": 2026,
     "month": "2026-03",
     "total": 148760,
+    "status": "confirmed"
+  },
+  {
+    "staff_id": "1771527161676",
+    "year": 2026,
+    "month": "2026-02",
+    "total": 90353,
     "status": "confirmed"
   }
 ]

@@ -12,7 +12,7 @@ def main():
     # =============================
     # データ取得
     # =============================
-    distribution = SalesDistributionService.calculate()
+
     staff_list = StaffRepository.load_all()
 
     if not staff_list:
@@ -28,11 +28,31 @@ def main():
 
     st.title("💽 売上分析")
 
-    selected_id = st.selectbox(
-        "担当者を選択",
-        options=[staff.id for staff in staff_list],
-        format_func=lambda x: staff_dict[x].name
-    )
+    col_select1, col_select2 = st.columns([2, 1])
+
+    with col_select1:
+        selected_id = st.selectbox(
+            "担当者を選択",
+            options=[staff.id for staff in staff_list],
+            format_func=lambda x: staff_dict[x].name
+        )
+
+    with col_select2:
+        all_months = SalesRepository.get_available_months()
+
+        if not all_months:
+            st.warning("売上データがありません")
+            st.stop()
+
+        target_month = st.selectbox(
+            "対象月",
+            options=sorted(all_months, reverse=True)
+        )
+
+    st.session_state.target_month = target_month
+
+    # 🔥 月指定で再計算
+    distribution = SalesDistributionService.calculate(target_month)
 
     selected_staff = staff_dict[selected_id]
     data = distribution.get(selected_id, {})
@@ -41,8 +61,6 @@ def main():
     children_amount = data.get("children_sales_amount", 0)
     org_amount = personal_amount + children_amount
 
-    personal_f = data.get("personal_sales_f", 0)
-    children_f = data.get("children_sales_f", 0)
     org_f = data.get("org_sales_f", 0)
 
     col1, col2, col3 = st.columns(3)
@@ -58,13 +76,12 @@ def main():
 
     st.markdown('</div>', unsafe_allow_html=True)
 
-
     # =============================
-    # 売上明細
+    # 売上明細（🔥 月フィルタ）
     # =============================
     st.subheader("売上明細")
 
-    sales = SalesRepository.find_by_staff(selected_id)
+    sales = SalesRepository.find_by_staff_and_month(selected_id, target_month)
 
     if not sales:
         st.write("明細なし")
@@ -80,7 +97,7 @@ def main():
                 }
                 for s in sales
             ],
-            use_container_width=True
+            width="stretch"
         )
 
     # =============================
@@ -117,7 +134,9 @@ def main():
                 with c3:
                     st.metric("組織F", f"{int(child_f):,}")
 
-                child_sales = SalesRepository.find_by_staff(child.id)
+                child_sales = SalesRepository.find_by_staff_and_month(
+                    child.id, target_month
+                )
 
                 if child_sales:
                     st.dataframe(
@@ -130,5 +149,5 @@ def main():
                             }
                             for s in child_sales
                         ],
-                        use_container_width=True
+                        width="stretch"
                     )

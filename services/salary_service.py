@@ -30,11 +30,10 @@ class SalaryService:
         org_sales_amount = personal_sales_amount + children_sales_amount
 
         # ==============================
-        # ③ 組織売上F
+        # ② 組織売上F（summaryから直接取得）
         # ==============================
-        children_sales_f = summary.get("children_sales_f", 0)
-
-        org_sales_f = personal_sales_f + children_sales_f
+        org_sales_f = summary.get("org_sales_f", 0)
+        personal_sales_amount = summary.get("personal_sales_amount", 0)
 
         # ==============================
         # ④ Fテーブルからレート取得
@@ -58,7 +57,6 @@ class SalaryService:
         return {
             "type": "staff",
             "personal_sales_amount": personal_sales_amount,
-            "personal_sales_f": personal_sales_f,
             "org_sales_f": org_sales_f,
             "commission_rate": commission_rate,
             "total": total

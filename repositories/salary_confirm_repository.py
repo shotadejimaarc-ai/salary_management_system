@@ -2,6 +2,8 @@
 
 import json
 import os
+from database import get_connection
+import sqlite3
 
 FILE_PATH = "data/salary_confirms.json"
 
@@ -66,3 +68,20 @@ class SalaryConfirmRepository:
         data = SalaryConfirmRepository.load()
         month_str = f"{year}-{str(month).zfill(2)}"
         return [d for d in data if d["month"] == month_str]
+    
+
+    # ==========================
+    # 確定解除（JSON版）
+    # ==========================
+    @staticmethod
+    def cancel(staff_id, year, month):
+        data = SalaryConfirmRepository.load()
+        month_str = f"{year}-{str(month).zfill(2)}"
+
+        # 該当データ削除
+        new_data = [
+            d for d in data
+            if not (d["staff_id"] == staff_id and d["month"] == month_str)
+        ]
+
+        SalaryConfirmRepository.save(new_data)

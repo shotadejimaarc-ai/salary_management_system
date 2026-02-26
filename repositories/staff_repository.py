@@ -36,7 +36,7 @@ class StaffRepository:
                     account_type=row["account_type"] if "account_type" in row.keys() else "普通",
                     account_number=str(row["account_number"]).zfill(7) if row["account_number"] else "",
                     account_holder=row["account_holder"] if "account_holder" in row.keys() else "",
-                    stock_balance=row["stock_balance"],
+                    stock_balance=row["stock_balance"] if "stock_balance" in row.keys() else 0,
                 )
             )
 
@@ -101,7 +101,7 @@ class StaffRepository:
                         name,
                         type,
                         parents,
-                        payment_method=?,
+                        payment_method,
                         transportation_cost,
                         working_hours,
                         bank_name,

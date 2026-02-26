@@ -9,7 +9,6 @@ from database import init_db, migrate_staff_table
 st.set_page_config(
     page_title="BAR給与管理システム",
     layout="wide",
-    initial_sidebar_state="expanded"
 )
 
 
@@ -41,41 +40,54 @@ def get_base64_logo():
     return None
 
 
-# ==================================
+# =============================
 # ログイン画面
-# ==================================
+# =============================
 if not st.session_state.logged_in:
 
     st.markdown("""
     <style>
-    .stApp {
+    [data-testid="stSidebar"] {display:none;}
+    header {display:none;}
+    [data-testid="stHeader"] {display:none;}
+
+    body {
         background: linear-gradient(135deg, #0d1b2a, #1b263b);
     }
-    [data-testid="stSidebar"] {display:none;}
     </style>
     """, unsafe_allow_html=True)
 
-    logo_base64 = get_base64_logo()
-    if logo_base64:
-        st.markdown(f"""
-        <div style="text-align:center; margin-top:60px;">
-            <img src="data:image/png;base64,{logo_base64}" width="260">
-        </div>
-        """, unsafe_allow_html=True)
+    # 横中央に配置
+    left, center, right = st.columns([2, 3, 2])
 
-    st.markdown("<h2 style='text-align:center;color:white;'>給与管理システム</h2>", unsafe_allow_html=True)
+    with center:
 
-    with st.form("login_form"):
-        username = st.text_input("ユーザーID")
-        password = st.text_input("パスワード", type="password")
-        submitted = st.form_submit_button("ログイン")
+        st.markdown("<br><br>", unsafe_allow_html=True)
 
-        if submitted:
-            if username == "admin" and password == "Tqv:32566":
-                st.session_state.logged_in = True
-                st.rerun()
-            else:
-                st.error("IDまたはパスワードが違います")
+        logo_base64 = get_base64_logo()
+        if logo_base64:
+            st.markdown(f"""
+                <div style="text-align:center;">
+                    <img src="data:image/png;base64,{logo_base64}" width="180">
+                </div>
+            """, unsafe_allow_html=True)
+
+        st.markdown(
+            "<h2 style='text-align:center;color:white;margin-bottom:30px;'>給与管理システム</h2>",
+            unsafe_allow_html=True
+        )
+
+        with st.form("login_form"):
+            username = st.text_input("ユーザーID")
+            password = st.text_input("パスワード", type="password")
+            submitted = st.form_submit_button("ログイン")
+
+            if submitted:
+                if username == "admin" and password == "Tqv:32566":
+                    st.session_state.logged_in = True
+                    st.rerun()
+                else:
+                    st.error("IDまたはパスワードが違います")
 
 
 # ==================================

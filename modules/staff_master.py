@@ -12,7 +12,7 @@ def main():
     apply_global_style()
 
     st.title("🧑‍🧑‍🧒‍🧒 担当者管理")
-    tab1, tab2 = st.tabs(["担当者インポート", "担当者マスタ管理"])
+    tab1, tab2, tab3 = st.tabs(["担当者インポート", "担当者マスタ管理", "👥 組織図"])
 
     DB_PATH = "app.db"
 
@@ -173,49 +173,6 @@ def main():
             st.divider()
 
             # =============================
-            # バイト設定
-            # =============================
-            if selected_staff.type == "baito":
-
-                selected_staff.hourly_wage = st.number_input(
-                    "時給",
-                    min_value=0,
-                    value=getattr(selected_staff, "hourly_wage", 0),
-                    key=f"hourly_{selected_id}"
-                )
-
-                selected_staff.working_hours = st.number_input(
-                    "合計稼働時間",
-                    min_value=0.0,
-                    value=getattr(selected_staff, "working_hours", 0.0),
-                    key=f"hours_{selected_id}"
-                )
-
-                selected_staff.transportation_cost = st.number_input(
-                    "交通費（片道）",
-                    min_value=0,
-                    value=getattr(selected_staff, "transportation_cost", 0),
-                    key=f"transport_{selected_id}"
-                )
-
-                selected_staff.work_days = st.number_input(
-                    "出勤日数",
-                    min_value=0,
-                    value=getattr(selected_staff, "work_days", 0),
-                    key=f"days_{selected_id}"
-                )
-
-                base_salary = selected_staff.hourly_wage * selected_staff.working_hours
-                transport_total = selected_staff.transportation_cost * selected_staff.work_days * 2
-
-                st.markdown("##### 💰 給与試算")
-                st.write(f"時給分：{int(base_salary):,} 円")
-                st.write(f"交通費合計：{int(transport_total):,} 円")
-                st.success(f"合計：{int(base_salary + transport_total):,} 円")
-
-            st.divider()
-
-            # =============================
             # 銀行情報
             # =============================
             banks_df = get_bank_list()
@@ -236,33 +193,67 @@ def main():
                 bank_code = selected_bank_display.split(" ")[0]
                 bank_name = selected_bank_display.split(" ", 1)[1]
 
-                branches_df = get_branch_list(bank_code)
+                # ==========================================
+                # 🏦 ゆうちょ銀行（9900）の場合
+                # ==========================================
+                if bank_code == "9900":
+                    st.markdown("### 📮 ゆうちょ銀行入力")
 
-                selected_branch_display = st.selectbox(
-                    "支店（コード＋名称）",
-                    options=branches_df["display"],
-                    key=f"branch_{selected_id}"
-                )
+                    symbol_input = st.text_input(
+                        "記号（5桁）",
+                        key=f"yucho_symbol_{selected_id}"
+                    )
 
-                if selected_branch_display:
-                    branch_code = selected_branch_display.split(" ")[0]
-                    branch_name = selected_branch_display.split(" ", 1)[1]
+                    number_input = st.text_input(
+                        "番号（8桁）",
+                        key=f"yucho_number_{selected_id}"
+                    )
 
-                account_number_input = st.text_input(
-                    "口座番号（7桁）",
-                    key=f"account_{selected_id}"
-                )
+                    # 数字だけ抽出
+                    branch_code = "".join(filter(str.isdigit, symbol_input))
+                    account_number = "".join(filter(str.isdigit, number_input))
 
-                account_number = "".join(filter(str.isdigit, account_number_input))
-                if account_number:
-                    account_number = account_number.zfill(7)
+                    if branch_code:
+                        branch_code = branch_code.zfill(5)
 
+                    if account_number:
+                        account_number = account_number.zfill(8)
+
+                    branch_name = "ゆうちょ"
+
+                # ==========================================
+                # 🏦 通常銀行
+                # ==========================================
+                else:
+                    branches_df = get_branch_list(bank_code)
+
+                    selected_branch_display = st.selectbox(
+                        "支店（コード＋名称）",
+                        options=branches_df["display"],
+                        key=f"branch_{selected_id}"
+                    )
+
+                    if selected_branch_display:
+                        branch_code = selected_branch_display.split(" ")[0]
+                        branch_name = selected_branch_display.split(" ", 1)[1]
+
+                    account_number_input = st.text_input(
+                        "口座番号（7桁）",
+                        key=f"account_{selected_id}"
+                    )
+
+                    account_number = "".join(filter(str.isdigit, account_number_input))
+                    if account_number:
+                        account_number = account_number.zfill(7)
+
+            # 口座種別
             account_type = st.selectbox(
                 "口座種別",
                 ["普通", "当座"],
                 key=f"type_{selected_id}"
             )
 
+            # 口座名義
             account_holder_kana = st.text_input(
                 "口座名義（カナ）",
                 key=f"holder_{selected_id}"
@@ -282,3 +273,32 @@ def main():
 
                 StaffRepository.save(selected_staff)
                 st.success("保存しました ✅")
+    
+    # =============================
+    # タブ3：組織図表示
+    # =============================
+    with tab3:
+
+        st.subheader("👥 担当者 親子関係図")
+
+        import graphviz
+
+        staff_list = StaffRepository.load_all()
+
+        if not staff_list:
+            st.warning("スタッフ未登録")
+            st.stop()
+
+        dot = graphviz.Digraph()
+
+        # ノード追加
+        for staff in staff_list:
+            dot.node(staff.id, staff.name)
+
+        # エッジ追加（親 → 子）
+        for staff in staff_list:
+            if staff.parents:
+                for parent_id in staff.parents:
+                    dot.edge(parent_id, staff.id)
+
+        st.graphviz_chart(dot)
