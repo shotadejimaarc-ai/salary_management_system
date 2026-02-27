@@ -6,64 +6,53 @@ class SalaryService:
     @staticmethod
     def calculate_staff_salary(staff, summary, commission_rules, category_master):
 
-        # ==============================
-        # ① 個人売上金額
-        # ==============================
         personal_sales_amount = summary.get("personal_sales_amount", 0)
 
-        # ==============================
-        # ② 個人売上F
-        # ==============================
-        personal_sales_f = 0
-
-        personal_sales_detail = summary.get("personal_sales_detail", {})
-
-        for category, amount in personal_sales_detail.items():
-            f_rate = category_master.get(category, {}).get("f_rate", 0)
-            personal_sales_f += amount * f_rate
-        
-        # ==============================
-        # ③ 組織売上金額
-        # ==============================
+        personal_sales_f = summary.get("personal_sales_f", 0)
         children_sales_amount = summary.get("children_sales_amount", 0)
+        children_sales_f = summary.get("children_sales_f", 0)
 
         org_sales_amount = personal_sales_amount + children_sales_amount
+        org_sales_f = personal_sales_f + children_sales_f
 
-        # ==============================
-        # ② 組織売上F（summaryから直接取得）
-        # ==============================
-        org_sales_f = summary.get("org_sales_f", 0)
-        personal_sales_amount = summary.get("personal_sales_amount", 0)
-
-        # ==============================
-        # ④ Fテーブルからレート取得
-        # ==============================
+        # ===== レート判定（最重要修正版） =====
         commission_rate = 0
 
+        commission_rules = sorted(commission_rules, key=lambda x: x["min"])
+
         for rule in commission_rules:
-            max_val = rule["max"] if rule["max"] is not None else float("inf")
-            if org_sales_f >= rule["min"] and org_sales_f < max_val:
-                commission_rate = rule["rate"]
-                break
+            min_val = rule.get("min", 0)
+            max_val = rule.get("max")
+            rate = rule.get("rate", 0)
 
-        # ==============================
-        # ⑤ 総支給額
-        # ==============================
+            # ％登録対策（70 → 0.7）
+            if rate > 1:
+                rate = rate / 100
+
+            if max_val is None:
+                if org_sales_f >= min_val:
+                    commission_rate = rate
+                    break
+            else:
+                if min_val <= org_sales_f <= max_val:
+                    commission_rate = rate
+                    break
+
         total = org_sales_f * commission_rate
-
-        # 家賃（社員のみ）
         total -= 2000
 
         return {
             "type": "staff",
-            "personal_sales_amount": personal_sales_amount,
-            "org_sales_f": org_sales_f,
+            "personal_sales_amount": int(personal_sales_amount),
+            "personal_sales_f": int(personal_sales_f),
+            "org_sales_amount": int(org_sales_amount),
+            "org_sales_f": int(org_sales_f),
             "commission_rate": commission_rate,
-            "total": total
+            "total": int(total)
         }
 
     # ==========================================
-    # バイト給与
+    # バイト給与計算
     # ==========================================
     @staticmethod
     def calculate_part_time_salary(staff, summary, category_master):

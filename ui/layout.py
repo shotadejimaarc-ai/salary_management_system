@@ -31,6 +31,28 @@ def apply_dark_bank_style():
         padding-top: 0rem !important;
         margin-top: 0rem !important;
     }
+                    /* トップバー */
+    .topbar {
+        background: #0f172a;
+        padding: 16px 24px;
+        border-bottom: 1px solid #1f2937;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        border-radius: 12px;
+        margin-bottom: 20px;
+    }
+
+    .topbar-title {
+        font-size: 20px;
+        font-weight: 600;
+        color: white;
+    }
+
+    .topbar-user {
+        font-size: 14px;
+        color: #9ca3af;
+    }
 
     </style>
     """, unsafe_allow_html=True)
@@ -101,3 +123,35 @@ def render_layout():
         st.markdown("</div>", unsafe_allow_html=True)
 
     return col_main
+
+
+def render_topbar(title="Dashboard"):
+
+    col1, col2, col3 = st.columns([3, 2, 2])
+
+    with col1:
+        st.markdown(f"""
+        <div class="topbar-title">
+            {title}
+        </div>
+        """, unsafe_allow_html=True)
+
+    with col2:
+        if "target_month" not in st.session_state:
+            st.session_state.target_month = "2026-02"
+
+        month = st.selectbox(
+            " ",
+            ["2025-10", "2025-11", "2025-12", "2026-01", "2026-02"],
+            index=4,
+            key="target_month_select"
+        )
+        st.session_state.target_month = month
+
+    with col3:
+        user_name = st.session_state.get("user_name", "Admin")
+        st.markdown(f"""
+        <div class="topbar-user">
+            👤 {user_name}
+        </div>
+        """, unsafe_allow_html=True)
