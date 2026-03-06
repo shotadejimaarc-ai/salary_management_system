@@ -1,6 +1,7 @@
 from ui.ui_style import apply_global_style
 from ui.sidebar import render_sidebar
-
+apply_global_style()
+render_sidebar()
 # 給与計算・確定.py
 # Streamlit 給与計算画面
 #   - Tab1: バイト給与（v_baito_salary）
