@@ -1,8 +1,5 @@
 from ui.ui_style import apply_global_style
-apply_global_style()
-
 from ui.sidebar import render_sidebar
-render_sidebar()
 
 # 給与計算・確定.py
 # Streamlit 給与計算画面

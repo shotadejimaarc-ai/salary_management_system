@@ -3,9 +3,7 @@ import pandas as pd
 from datetime import date
 
 from ui.ui_style import apply_global_style
-apply_global_style()
 from ui.sidebar import render_sidebar
-render_sidebar()
 
 from queries import (
     q_staff_master_all,

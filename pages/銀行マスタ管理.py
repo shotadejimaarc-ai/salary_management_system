@@ -1,8 +1,5 @@
 from ui.ui_style import apply_global_style
-apply_global_style()
-
 from ui.sidebar import render_sidebar
-render_sidebar()
 import streamlit as st
 from queries import q_bank_branch_list, refresh_bank_master_from_api
 if not st.session_state.get("authenticated", False):
