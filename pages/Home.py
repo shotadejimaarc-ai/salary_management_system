@@ -112,17 +112,16 @@ progress.progress(40)
 last_confirmed_at = get_last_confirmed_at()
 progress.progress(60)
 sales_last = get_sales_total(last_month_ym)
+progress.progress(80)
 sales_prev = get_sales_total(prev_month_ym)
 
-progress.progress(80)
+progress.progress(100)
 if sales_prev > 0:
     sales_diff_pct = ((sales_last - sales_prev) / sales_prev) * 100
     sales_diff_text = f"{sales_diff_pct:+.1f}%"
 else:
     sales_diff_text = "—"
 
-
-progress.progress(100)
 clear_loading(loading_box, progress)
 
 # ===== 高級バーUI（フォント＋背景＋タイポ＋カード）=====
