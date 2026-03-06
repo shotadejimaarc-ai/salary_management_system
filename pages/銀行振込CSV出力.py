@@ -58,19 +58,14 @@ def normalize_account_type(v) -> str:
 
 def normalize_holder_kana(name: str) -> str:
     """
-    jaconv無しで安全寄りの最低限整形：
-      - 中黒「・」→スペース
-      - 全角スペース→半角
-      - NFKC正規化
-      - 連続スペース圧縮
-      - 長さカット（保守的に）
+    口座名義は担当者マスタで半角カナ保存されている前提。
+    ここでは全角化しない。
     """
     if name is None:
         return ""
     s = str(name).strip()
     s = s.replace("・", " ")
     s = s.replace("　", " ")
-    s = unicodedata.normalize("NFKC", s)
     s = re.sub(r"\s+", " ", s)
     return s[:48]
 
