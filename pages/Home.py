@@ -89,16 +89,17 @@ def get_confirm_status(target_month: str):
         "staff_confirmed": safe_int((staff_confirmed_row or {}).get("cnt")),
         "baito_confirmed": safe_int((baito_confirmed_row or {}).get("cnt")),
     }
-progress.progress(20)
+
 def get_last_confirmed_at():
     row = fetch_one("""
         SELECT MAX(confirmed_at) AS last_confirmed_at
         FROM public.salary_confirms
     """)
     return (row or {}).get("last_confirmed_at")
-progress.progress(40)
+progress.progress(20)
 def get_sales_total(target_month: str):
     # payments.paid_at から月次売上を集計
+    progress.progress(40)
     row = fetch_one("""
         SELECT COALESCE(SUM(total_amount), 0) AS total
         FROM public.payments
@@ -106,9 +107,10 @@ def get_sales_total(target_month: str):
     """, {"ym": target_month})
     return safe_int((row or {}).get("total"))
 
+progress.progress(60)
 confirm_status = get_confirm_status(last_month_ym)
 last_confirmed_at = get_last_confirmed_at()
-progress.progress(60)
+
 sales_last = get_sales_total(last_month_ym)
 sales_prev = get_sales_total(prev_month_ym)
 
