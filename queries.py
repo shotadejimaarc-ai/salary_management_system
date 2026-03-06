@@ -499,3 +499,63 @@ def q_baito_mapping_detail_month(year_month: str):
         order by oi.business_date desc, oi.created_at desc, oi.order_id desc
     """, [year_month])
 
+def q_baito_mapping_summary_month(year_month: str):
+    """
+    更新対象候補の件数・金額を親スタッフ別に集計
+    """
+    return fetch_df("""
+        select
+          bs.parent_id as mapped_staff_id,
+          ps.name as mapped_staff_name,
+          count(*) as item_count,
+          coalesce(sum(oi.qty * oi.unit_price), 0) as total_amount
+        from public.order_items oi
+        left join public.menu m
+          on m.menu_id = oi.menu_id
+        left join public.category c
+          on c.category_id = m.category_id
+        join public.staff bs
+          on bs.staff_id::text = oi.credit_staff_id::text
+        left join public.staff ps
+          on ps.staff_id::text = bs.parent_id::text
+        where oi.is_paid = true
+          and to_char(oi.business_date, 'YYYY-MM') = %s
+          and bs.type = 'baito'
+          and coalesce(c.is_drink_back, false) = false
+          and bs.parent_id is not null
+          and trim(bs.parent_id::text) <> ''
+          and (bs.parent_id_2 is null or trim(bs.parent_id_2::text) = '')
+        group by bs.parent_id, ps.name
+        order by total_amount desc, item_count desc
+    """, [year_month])
+
+
+def exec_baito_mapping_update_month(year_month: str):
+    """
+    バイト帰属（非ドリンクバック）の売上明細を、親staffへ一括付替する
+    戻り値: 更新件数
+    """
+    sql = """
+        update public.order_items oi
+        set credit_staff_id = bs.parent_id
+        from public.menu m
+        left join public.category c
+          on c.category_id = m.category_id
+        join public.staff bs
+          on bs.staff_id::text = oi.credit_staff_id::text
+        where m.menu_id = oi.menu_id
+          and oi.is_paid = true
+          and to_char(oi.business_date, 'YYYY-MM') = %s
+          and bs.type = 'baito'
+          and coalesce(c.is_drink_back, false) = false
+          and bs.parent_id is not null
+          and trim(bs.parent_id::text) <> ''
+          and (bs.parent_id_2 is null or trim(bs.parent_id_2::text) = '')
+          and oi.credit_staff_id::text <> bs.parent_id::text
+    """
+    with get_conn() as conn:
+        cur = conn.cursor()
+        cur.execute(sql, [year_month])
+        affected = cur.rowcount
+        conn.commit()
+        return affected

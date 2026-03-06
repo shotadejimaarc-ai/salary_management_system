@@ -10,6 +10,8 @@ from queries import (
     q_sales_total_month,
     q_staff_sales_detail_month,
     q_baito_mapping_detail_month,
+    q_baito_mapping_summary_month,
+    exec_baito_mapping_update_month,
 )
 
 if not st.session_state.get("authenticated", False):
@@ -241,7 +243,7 @@ with tab1:
 with tab2:
     st.markdown('<div class="section-title">バイト明細マッピング</div>', unsafe_allow_html=True)
     st.markdown(
-        '<div class="hint">バイト帰属の明細のうち、ドリンクバック以外は親スタッフへ付け替えるべき候補を一覧表示します。</div>',
+        '<div class="hint">バイト帰属の明細のうち、ドリンクバック以外は親スタッフへ付け替える対象を一覧表示し、一括更新できます。</div>',
         unsafe_allow_html=True,
     )
     st.markdown("<hr/>", unsafe_allow_html=True)
@@ -256,7 +258,7 @@ with tab2:
         st.info("対象月に、バイトへ帰属している売上明細がありません。")
         st.stop()
 
-    # 対象判定
+    # 更新対象判定
     df_map["is_mapping_target"] = df_map["mapping_status"].eq("親へマッピング")
 
     # KPI
@@ -275,12 +277,60 @@ with tab2:
 
     st.markdown("---")
 
+    # 実行前注意
+    st.warning(
+        "実行すると、対象月の『バイト帰属かつ非ドリンクバック』明細について、"
+        "order_items.credit_staff_id を親staff_idへ更新します。"
+        "親未設定・親2ありは更新対象外です。"
+    )
+
+    # 親別集計
+    st.markdown("### 親スタッフ別 集計")
+    try:
+        df_summary = q_baito_mapping_summary_month(year_month).copy()
+    except Exception as e:
+        st.error(f"親スタッフ別集計の取得に失敗: {e}")
+        st.stop()
+
+    if df_summary.empty:
+        st.info("更新対象となる明細はありません。")
+    else:
+        show_summary = df_summary.rename(columns={
+            "mapped_staff_id": "親staff_id",
+            "mapped_staff_name": "親スタッフ名",
+            "item_count": "対象件数",
+            "total_amount": "対象売上",
+        })
+        st.dataframe(show_summary, use_container_width=True, hide_index=True)
+
+    # 実行エリア
+    c_run1, c_run2 = st.columns([1.4, 2.6])
+    with c_run1:
+        confirm_exec = st.checkbox("内容を確認し、この月の更新を実行してよい", value=False, key="baito_map_confirm")
+    with c_run2:
+        if st.button(
+            "バイト明細を親スタッフへ一括マッピング実行",
+            type="primary",
+            disabled=not confirm_exec or df_summary.empty,
+            use_container_width=True,
+            key="baito_map_execute",
+        ):
+            try:
+                affected = exec_baito_mapping_update_month(year_month)
+                st.success(f"更新完了：{affected} 件の明細を親スタッフへ付け替えました。")
+                st.rerun()
+            except Exception as e:
+                st.error(f"一括更新に失敗しました: {e}")
+                st.stop()
+
+    st.markdown("---")
+
     # フィルタ
     f1, f2, f3, f4 = st.columns([1.2, 1.3, 1.3, 1.6])
     with f1:
         show_mode = st.selectbox(
             "表示",
-            ["全件", "親へマッピングのみ", "親未設定のみ", "親2あり（要確認）のみ"],
+            ["全件", "親へマッピングのみ", "親未設定のみ", "親2あり（要確認）のみ", "対象外（ドリンクバック）のみ"],
             index=1,
             key="baito_map_show_mode",
         )
@@ -299,6 +349,8 @@ with tab2:
         filtered = filtered[filtered["mapping_status"] == "親未設定"]
     elif show_mode == "親2あり（要確認）のみ":
         filtered = filtered[filtered["mapping_status"] == "親2あり（要確認）"]
+    elif show_mode == "対象外（ドリンクバック）のみ":
+        filtered = filtered[filtered["mapping_status"] == "対象外（ドリンクバック）"]
 
     if kw_baito.strip():
         k = kw_baito.strip().lower()
@@ -320,26 +372,6 @@ with tab2:
         filtered = filtered.sort_values(["business_date", "created_at"], ascending=[False, False])
 
     filtered = filtered.head(int(limit_map))
-
-    # 集計サマリー（親別）
-    st.markdown("### 親スタッフ別 集計")
-    df_target = df_map[df_map["mapping_status"] == "親へマッピング"].copy()
-
-    if not df_target.empty:
-        summary = (
-            df_target.groupby(["mapped_staff_id", "mapped_staff_name"], dropna=False)["line_total"]
-            .sum()
-            .reset_index()
-            .sort_values("line_total", ascending=False)
-        )
-        summary = summary.rename(columns={
-            "mapped_staff_id": "親staff_id",
-            "mapped_staff_name": "親スタッフ名",
-            "line_total": "付替対象売上",
-        })
-        st.dataframe(summary, use_container_width=True, hide_index=True)
-    else:
-        st.info("親へマッピング対象の明細はありません。")
 
     st.markdown("### 明細一覧")
 
@@ -391,9 +423,4 @@ with tab2:
         file_name=f"baito_mapping_{year_month}.csv",
         use_container_width=True,
         key="baito_mapping_csv",
-    )
-
-    st.info(
-        "このタブは確認用です。実際に給与へ反映するには、同じ『バイト→親staffへ付替』ロジックを "
-        "給与集計用view / query側にも入れる必要があります。"
     )
