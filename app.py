@@ -1,11 +1,4 @@
 import streamlit as st
-import streamlit as st
-
-from ui.ui_style import apply_global_style
-from ui.sidebar import render_sidebar
-
-apply_global_style()
-render_sidebar()
 
 # ===== パスワード認証 =====
 def check_password():
@@ -31,4 +24,10 @@ if not check_password():
     st.stop()
 
 # すでに認証済みで app.py に来た時も Home に飛ばす
+from ui.ui_style import apply_global_style
+from ui.sidebar import render_sidebar
+
+apply_global_style()
+render_sidebar()
+
 st.switch_page("pages/Home.py")
