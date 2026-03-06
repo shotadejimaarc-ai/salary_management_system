@@ -78,7 +78,9 @@ need_cols = [
     "hourly_wage", "transportation_allowance",
     "payment_method",
     "stock_amount",
-    "bank_name", "bank_branch", "bank_account_type", "bank_account_number", "bank_account_holder",
+    "bank_code", "branch_code",
+    "bank_name", "bank_branch",
+    "bank_account_type", "bank_account_number", "bank_account_holder",
 ]
 for c in need_cols:
     if c not in df_all.columns:
@@ -131,7 +133,11 @@ with tab_edit:
         if type_filter != "すべて":
             df = df[df["type"] == type_filter]
 
-        bank_cols = ["bank_name", "bank_branch", "bank_account_type", "bank_account_number", "bank_account_holder"]
+        bank_cols = [
+            "bank_code", "branch_code",
+            "bank_name", "bank_branch",
+            "bank_account_type", "bank_account_number", "bank_account_holder"
+        ]
         if only_missing_bank:
             mask = df[bank_cols].isna().any(axis=1) | (
                 df[bank_cols].astype(str).apply(lambda s: s.str.strip()).eq("").any(axis=1)
@@ -344,7 +350,20 @@ with tab_edit:
                 # --- 銀行検索/選択 ---
                 bank_kw = st.text_input("銀行検索（コード/名称）", value="", key=k_bank_kw)
                 banks_df = q_banks(bank_kw)
-                bank_opts = [""] + [f"{r.bank_code}｜{r.bank_name}" for r in banks_df.itertuples()]
+
+                bank_opts_raw = [f"{r.bank_code}｜{r.bank_name}" for r in banks_df.itertuples()]
+
+                current_bank_code = str(row.get("bank_code") or "").strip()
+                current_bank_name = str(row.get("bank_name") or "").strip()
+
+                current_bank_opt = ""
+                if current_bank_code:
+                    current_bank_opt = f"{current_bank_code}｜{current_bank_name}"
+
+                if current_bank_opt and current_bank_opt not in bank_opts_raw:
+                    bank_opts_raw = [current_bank_opt] + bank_opts_raw
+
+                bank_opts = [""] + bank_opts_raw
 
                 current_bank_code = str(row.get("bank_code") or "").strip()
                 bank_default = 0
@@ -373,12 +392,23 @@ with tab_edit:
                     else pd.DataFrame(columns=["branch_code", "branch_name"])
                 )
 
-                # 表示をゆうちょ寄せ（店番を前に）
+                branch_opts_raw = [f"{r.branch_code}｜{r.branch_name}" for r in branches_df.itertuples()]
+
+                current_branch_code = str(row.get("branch_code") or "").strip()
+                current_branch_name = str(row.get("bank_branch") or "").strip()
+
+                current_branch_opt = ""
+                if current_branch_code:
+                    current_branch_opt = f"{current_branch_code}｜{current_branch_name}"
+
+                if current_branch_opt and current_branch_opt not in branch_opts_raw:
+                    branch_opts_raw = [current_branch_opt] + branch_opts_raw
+
                 if is_yucho:
-                    branch_opts = [""] + [f"{r.branch_code}｜{r.branch_name}" for r in branches_df.itertuples()]
+                    branch_opts = [""] + branch_opts_raw
                     branch_select_label = "店名（店番）を選択"
                 else:
-                    branch_opts = [""] + [f"{r.branch_code}｜{r.branch_name}" for r in branches_df.itertuples()]
+                    branch_opts = [""] + branch_opts_raw
                     branch_select_label = "支店を選択"
 
                 current_branch_code = str(row.get("branch_code") or "").strip()
@@ -457,28 +487,49 @@ with tab_edit:
 
         # ---- 保存（フォーム外）----
         if save:
+            final_bank_code = st.session_state.get(f"_picked_bank_code_{sid}")
+            final_branch_code = st.session_state.get(f"_picked_branch_code_{sid}")
+            final_bank_name = st.session_state.get(f"_picked_bank_name_{sid}")
+            final_branch_name = st.session_state.get(f"_picked_branch_name_{sid}")
+
+            acct_num_raw = (bank_number or "").strip()
+            acct_num_digits = "".join(ch for ch in acct_num_raw if ch.isdigit())
+
+            is_yucho_save = (final_bank_code == "9900") or ("ゆうちょ" in str(final_bank_name or ""))
+
+            if is_yucho_save:
+                final_bank_code = "9900"
+                if acct_num_digits:
+                    if len(acct_num_digits) == 8:
+                        acct_num_digits = acct_num_digits[-7:]
+                    elif len(acct_num_digits) != 7:
+                        st.error("ゆうちょの口座番号は7桁、または8桁で入力してください。")
+                        st.stop()
+            else:
+                if acct_num_digits and len(acct_num_digits) > 7:
+                    st.error("口座番号は7桁以内で入力してください。")
+                    st.stop()
+
+            acct_num_digits = acct_num_digits.zfill(7) if acct_num_digits else None
+
             payload = {
                 "staff_id": str(sid),
                 "type": staff_type,
                 "parent_id": (None if not parent_id_1 else parent_id_1),
                 "parent_id_2": (None if not parent_id_2 else parent_id_2),
-                "bank_code": st.session_state.get(f"_picked_bank_code_{sid}"),
-                "branch_code": st.session_state.get(f"_picked_branch_code_{sid}"),
-                "bank_name": st.session_state.get(f"_picked_bank_name_{sid}"),
-                "bank_branch": st.session_state.get(f"_picked_branch_name_{sid}"),
+                "bank_code": final_bank_code,
+                "branch_code": final_branch_code,
+                "bank_name": final_bank_name,
+                "bank_branch": final_branch_name,
                 "bank_account_type": (bank_type.strip() or None),
-                "bank_account_number": (bank_number.strip() or None),
+                "bank_account_number": acct_num_digits,
                 "bank_account_holder": (bank_holder.strip() or None),
                 "payment_method": payment_method,
-
-                # ✅ bank_code/branch_code をDBに保存したいなら update_staff_master を拡張してここも送る
-                "bank_code": st.session_state.get(f"bank_code_{sid}"),
-                "branch_code": st.session_state.get(f"branch_code_{sid}"),
             }
 
             update_staff_master(payload)
             st.success("保存しました。")
-            #st.rerun()
+            st.rerun()
 
 # =========================================================
 # Tab: Tree
