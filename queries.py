@@ -55,8 +55,8 @@ def q_drinkback_items(year_month: str, staff_id: str):
             select *
             from v_drinkback_items
             where credit_staff_id = %s
-              and to_char(opened_at, 'YYYY-MM') = %s
-            order by opened_at asc
+              and to_char(business_date, 'YYYY-MM') = %s
+            order by business_date asc, created_at asc
             """,
             conn,
             params=[staff_id, year_month],
@@ -418,26 +418,23 @@ def q_branches(bank_code: str, keyword: str = ""):
     """, [bank_code, f"%{kw}%", f"%{kw}%"])
 
 def q_sales_total_month(year_month: str):
-    """
-    対象月の合計売上（支払い合計ベース）
-    payments に paid_at/opened_at がある前提。
-    """
     return fetch_df("""
         select
-          to_char(date_trunc('month', p.paid_at), 'YYYY-MM') as target_month,
-          coalesce(sum(p.total_amount),0) as sales_total
+          %s as target_month,
+          coalesce(sum(p.total_amount), 0) as sales_total
         from payments p
-        where to_char(p.paid_at, 'YYYY-MM') = %s
-        group by 1
-    """, [year_month])
+        where to_char(p.business_date, 'YYYY-MM') = %s
+    """, [year_month, year_month])
 
 
 def q_staff_sales_detail_month(year_month: str, staff_id: str):
     return fetch_df("""
         select
-          o.created_at,
+          oi.business_date,
+          oi.created_at,
           oi.order_id,
           m.name as menu_name,
+          c.name as category_name,
           oi.qty,
           oi.unit_price,
           (oi.qty * oi.unit_price) as line_total,
@@ -445,9 +442,10 @@ def q_staff_sales_detail_month(year_month: str, staff_id: str):
         from order_items oi
         join orders o on o.order_id = oi.order_id
         join menu m on m.menu_id = oi.menu_id
-        where to_char(o.created_at, 'YYYY-MM') = %s
+        left join category c on c.category_id = m.category_id
+        where to_char(oi.business_date, 'YYYY-MM') = %s
           and oi.credit_staff_id = %s
-        order by o.created_at desc, oi.order_id desc
+        order by oi.created_at desc, oi.order_id desc
         limit 2000
     """, [year_month, staff_id])
 

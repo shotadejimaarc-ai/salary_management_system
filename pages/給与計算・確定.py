@@ -383,7 +383,8 @@ def export_org_detail_excel_staff(staff_id: str, target_month_ym: str) -> bytes:
       GROUP BY staff_id
     )
     SELECT
-      e.created_at::date                             AS "営業日",
+      e.business_date                                AS "営業日",
+      e.created_at::date                             AS "注文日時",
       s.name                                         AS "担当者名",
       e.category_name                                AS "カテゴリ",
       e.menu_name                                    AS "メニュー",

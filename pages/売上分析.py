@@ -70,9 +70,6 @@ with c2:
           <div style="font-size:2.1rem; font-weight:900; margin-top:0.25rem;">
             ¥ {total:,.0f}
           </div>
-          <div class="hint" style="margin-top:0.35rem;">
-            ※ payments 合計（支払いベース）で集計
-          </div>
         </div>
         """,
         unsafe_allow_html=True,
