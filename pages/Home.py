@@ -301,7 +301,6 @@ with col3:
         <div class="dash-label">SALES ({last_month_ym})</div>
         <div class="dash-value">¥{sales_last:,}</div>
         <div class="dash-sub">
-
             先月売上
         </div>
     </div>
@@ -313,7 +312,6 @@ with col4:
         <div class="dash-label">M OVER M</div>
         <div class="dash-value">{sales_diff_text}</div>
         <div class="dash-sub">
-        
             前月（{prev_month_ym}）比
         </div>
     </div>
