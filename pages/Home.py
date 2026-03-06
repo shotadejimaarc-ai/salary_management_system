@@ -290,7 +290,7 @@ with col2:
         <div class="dash-label">LAST CONFIRMED</div>
         <div class="dash-value">{last_confirm_text}</div>
         <div class="dash-sub">
-            直近で給与確定を実行した日時
+            給与確定を実行した日時
         </div>
     </div>
     """, unsafe_allow_html=True)
