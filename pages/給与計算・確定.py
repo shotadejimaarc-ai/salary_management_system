@@ -512,7 +512,16 @@ month_options = [x for x in month_options if not (x in seen or seen.add(x))]
 target_month_ym = st.selectbox("対象月", month_options)
 target_month_date: date = datetime.strptime(target_month_ym + "-01", "%Y-%m-%d").date()
 
-tab_baito, tab_staff, tab_confirms = st.tabs(["バイト給与", "スタッフ給与", "✅ 確定情報"])
+if "salary_tab" not in st.session_state:
+    st.session_state.salary_tab = "スタッフ給与"
+
+current_tab = st.radio(
+    "表示切替",
+    ["バイト給与", "スタッフ給与", "✅ 確定情報"],
+    horizontal=True,
+    key="salary_tab",
+    label_visibility="collapsed",
+)
 
 # =========================
 # 確定情報（共通）
@@ -529,7 +538,7 @@ confirmed_baito = {r["staff_id"]: r for _, r in confirm_df[confirm_df["staff_typ
 # =========================
 # Tab1: バイト給与
 # =========================
-with tab_baito:
+if current_tab == "バイト給与":
     baito_df = fetch_df("""
     select
       staff_id,
@@ -711,7 +720,7 @@ with tab_baito:
 # =========================
 # Tab2: スタッフ給与（既存ロジック）
 # =========================
-with tab_staff:
+elif current_tab == "スタッフ給与":
     salary_df = fetch_df("""
     select
       staff_id,
@@ -1053,7 +1062,7 @@ with tab_staff:
 
                         st.warning("給与取消しました（スタッフ）")
                         st.rerun()
-with tab_confirms:
+elif current_tab == "✅ 確定情報":
     st.subheader("✅ 確定情報（対象月）")
 
     has_is_canceled = table_has_column("salary_confirms", "is_canceled")
