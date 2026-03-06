@@ -96,10 +96,9 @@ def get_last_confirmed_at():
         FROM public.salary_confirms
     """)
     return (row or {}).get("last_confirmed_at")
-
+progress.progress(40)
 def get_sales_total(target_month: str):
     # payments.paid_at から月次売上を集計
-    progress.progress(40)
     row = fetch_one("""
         SELECT COALESCE(SUM(total_amount), 0) AS total
         FROM public.payments
