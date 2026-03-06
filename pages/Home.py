@@ -46,7 +46,7 @@ last_month_ym = f"{last_month_year:04d}-{last_month_month:02d}"
 prev_month_ym = f"{prev_month_year:04d}-{prev_month_month:02d}"
 
 # ===== 集計取得 =====
-progress.progress(20)
+
 def safe_int(v, default=0):
     try:
         if v is None:
@@ -54,7 +54,7 @@ def safe_int(v, default=0):
         return int(float(v))
     except Exception:
         return default
-progress.progress(40)
+
 def get_confirm_status(target_month: str):
     # staffテーブル上の人数
     staff_total_row = fetch_one("""
@@ -89,14 +89,14 @@ def get_confirm_status(target_month: str):
         "staff_confirmed": safe_int((staff_confirmed_row or {}).get("cnt")),
         "baito_confirmed": safe_int((baito_confirmed_row or {}).get("cnt")),
     }
-progress.progress(60)
+progress.progress(20)
 def get_last_confirmed_at():
     row = fetch_one("""
         SELECT MAX(confirmed_at) AS last_confirmed_at
         FROM public.salary_confirms
     """)
     return (row or {}).get("last_confirmed_at")
-progress.progress(80)
+progress.progress(40)
 def get_sales_total(target_month: str):
     # payments.paid_at から月次売上を集計
     row = fetch_one("""
@@ -108,10 +108,11 @@ def get_sales_total(target_month: str):
 
 confirm_status = get_confirm_status(last_month_ym)
 last_confirmed_at = get_last_confirmed_at()
-
+progress.progress(60)
 sales_last = get_sales_total(last_month_ym)
 sales_prev = get_sales_total(prev_month_ym)
 
+progress.progress(80)
 if sales_prev > 0:
     sales_diff_pct = ((sales_last - sales_prev) / sales_prev) * 100
     sales_diff_text = f"{sales_diff_pct:+.1f}%"
