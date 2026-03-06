@@ -110,6 +110,8 @@ with c2:
     )
 
 st.markdown("<hr/>", unsafe_allow_html=True)
+if "baito_map_confirm_open" not in st.session_state:
+    st.session_state["baito_map_confirm_open"] = False
 
 tab1, tab2 = st.tabs(["売上分析", "バイト明細マッピング"])
 
@@ -304,24 +306,98 @@ with tab2:
         st.dataframe(show_summary, use_container_width=True, hide_index=True)
 
     # 実行エリア
-    c_run1, c_run2 = st.columns([1.4, 2.6])
-    with c_run1:
-        confirm_exec = st.checkbox("内容を確認し、この月の更新を実行してよい", value=False, key="baito_map_confirm")
-    with c_run2:
+    # 実行前サマリー
+target_df = df_map[df_map["mapping_status"] == "親へマッピング"].copy()
+target_count = int(len(target_df))
+target_amount = int(pd.to_numeric(target_df["line_total"], errors="coerce").fillna(0).sum()) if not target_df.empty else 0
+
+st.markdown("### 一括マッピング実行")
+
+open_col1, open_col2 = st.columns([1.4, 2.6])
+
+with open_col1:
+    if st.button(
+        "更新内容を確認する",
+        disabled=(target_count == 0),
+        use_container_width=True,
+        key="baito_map_open_confirm",
+    ):
+        st.session_state["baito_map_confirm_open"] = True
+
+with open_col2:
+    if target_count == 0:
+        st.info("この月に更新対象はありません。")
+    else:
+        st.caption(f"対象月: {year_month} / 更新候補: {target_count}件 / 対象売上: ¥{target_amount:,}")
+
+# 確認ダイアログ風UI
+if st.session_state.get("baito_map_confirm_open", False) and target_count > 0:
+    st.markdown(
+        f"""
+        <div style="
+            margin-top: 0.6rem;
+            margin-bottom: 1rem;
+            padding: 1rem 1rem 1rem 1rem;
+            border-radius: 16px;
+            border: 1px solid rgba(255,255,255,0.14);
+            background: rgba(255, 183, 77, 0.08);
+        ">
+          <div style="font-size:1.05rem; font-weight:900; margin-bottom:0.45rem;">
+            ⚠ 一括マッピング実行の確認
+          </div>
+          <div style="line-height:1.7;">
+            対象月 <b>{year_month}</b> のうち、<br>
+            <b>バイト帰属 × 非ドリンクバック × 親1のみ設定</b> の明細について、<br>
+            <code>order_items.credit_staff_id</code> を <b>親staff_id</b> に更新します。<br><br>
+            更新対象件数: <b>{target_count:,}</b> 件<br>
+            対象売上合計: <b>¥ {target_amount:,}</b>
+          </div>
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
+
+    st.warning(
+        "実行後は対象明細の帰属先が変わります。"
+        "売上分析・給与計算の結果も変わるため、対象月をよく確認してから実行してください。"
+    )
+
+    final_check = st.checkbox(
+        f"{year_month} の対象明細を親スタッフへ更新することを確認しました",
+        value=False,
+        key="baito_map_final_check",
+    )
+
+    confirm_col1, confirm_col2, confirm_col3 = st.columns([1.2, 1.6, 1.2])
+
+    with confirm_col1:
         if st.button(
-            "バイト明細を親スタッフへ一括マッピング実行",
-            type="primary",
-            disabled=not confirm_exec or df_summary.empty,
+            "キャンセル",
             use_container_width=True,
-            key="baito_map_execute",
+            key="baito_map_cancel_confirm",
+        ):
+            st.session_state["baito_map_confirm_open"] = False
+            st.rerun()
+
+    with confirm_col2:
+        if st.button(
+            "最終実行：親スタッフへ一括マッピング",
+            type="primary",
+            disabled=not final_check,
+            use_container_width=True,
+            key="baito_map_execute_final",
         ):
             try:
                 affected = exec_baito_mapping_update_month(year_month)
+                st.session_state["baito_map_confirm_open"] = False
                 st.success(f"更新完了：{affected} 件の明細を親スタッフへ付け替えました。")
                 st.rerun()
             except Exception as e:
                 st.error(f"一括更新に失敗しました: {e}")
                 st.stop()
+
+    with confirm_col3:
+        st.caption("※ 実行後は一覧を再読込します")
 
     st.markdown("---")
 
