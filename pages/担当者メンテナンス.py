@@ -487,6 +487,7 @@ with tab_edit:
 
         # ---- 保存（フォーム外）----
         if save:
+            import re
             final_bank_code = st.session_state.get(f"_picked_bank_code_{sid}")
             final_branch_code = st.session_state.get(f"_picked_branch_code_{sid}")
             final_bank_name = st.session_state.get(f"_picked_bank_name_{sid}")
@@ -494,6 +495,16 @@ with tab_edit:
 
             acct_num_raw = (bank_number or "").strip()
             acct_num_digits = "".join(ch for ch in acct_num_raw if ch.isdigit())
+
+            holder_raw = (bank_holder or "").strip()
+            allowed_pattern = r"[0-9ｦ-ﾟ \-\(\)\./&]+"
+
+            if holder_raw:
+                invalid_chars = "".join(sorted(set(re.sub(allowed_pattern, "", holder_raw))))
+                if invalid_chars:
+                    st.error(f"口座名義に使用できない文字が含まれています: {invalid_chars}")
+                    st.info("口座名義は半角カタカナで入力してください。全角文字は使えません。")
+                    st.stop()
 
             is_yucho_save = (final_bank_code == "9900") or ("ゆうちょ" in str(final_bank_name or ""))
 
