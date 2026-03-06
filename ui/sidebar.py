@@ -49,3 +49,9 @@ def render_sidebar():
     st.sidebar.page_link("pages/給与ルール設定.py", label="給与ルール設定")
     st.sidebar.page_link("pages/担当者メンテナンス.py", label="担当者メンテナンス")
     st.sidebar.page_link("pages/銀行マスタ管理.py", label="銀行マスタ管理")
+
+    st.sidebar.markdown("---")
+
+    if st.sidebar.button("ログアウト"):
+        st.session_state.authenticated = False
+        st.switch_page("app.py")
