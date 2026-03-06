@@ -30,4 +30,5 @@ def check_password():
 if not check_password():
     st.stop()
 
-
+# すでに認証済みで app.py に来た時も Home に飛ばす
+st.switch_page("pages/Home.py")
