@@ -58,8 +58,12 @@ def normalize_account_type(v) -> str:
 
 def normalize_holder_kana(name: str) -> str:
     """
-    口座名義は担当者マスタで半角カナ保存されている前提。
-    ここでは全角化しない。
+    jaconv無しで安全寄りの最低限整形：
+      - 中黒「・」→スペース
+      - 全角スペース→半角
+      - NFKC正規化
+      - 連続スペース圧縮
+      - 長さカット（保守的に）
     """
     if name is None:
         return ""
