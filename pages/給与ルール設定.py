@@ -10,7 +10,8 @@ from queries import q_rate_rules, exec_sql
 from queries import q_categories, update_category
 from db import fetch_all  
 from db import fetch_one  
-
+if not st.session_state.get("authenticated", False):
+    st.switch_page("app.py")
 
 st.set_page_config(page_title="給与ルール管理", layout="wide")
 

@@ -8,7 +8,8 @@ import streamlit as st
 import pandas as pd
 
 from queries import q_staff_master_all, update_staff_master, q_banks, q_branches
-
+if not st.session_state.get("authenticated", False):
+    st.switch_page("app.py")
 st.set_page_config(page_title="担当者メンテナンス", layout="wide")
 
 # ===== CSS =====

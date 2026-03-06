@@ -12,7 +12,8 @@ from queries import (
     q_sales_total_month,
     q_staff_sales_detail_month,
 )
-
+if not st.session_state.get("authenticated", False):
+    st.switch_page("app.py")
 st.set_page_config(page_title="売上分析", layout="wide")
 apply_global_style()
 render_sidebar()

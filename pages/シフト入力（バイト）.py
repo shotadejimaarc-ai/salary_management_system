@@ -10,6 +10,8 @@ from datetime import datetime
 from dateutil.relativedelta import relativedelta
 
 from queries import q_baito_staff, q_baito_shift_month, upsert_baito_shift_month
+if not st.session_state.get("authenticated", False):
+    st.switch_page("app.py")
 
 st.set_page_config(page_title="シフト入力（バイト）", layout="wide")
 

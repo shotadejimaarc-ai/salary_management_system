@@ -33,7 +33,8 @@ from reportlab.lib import colors
 from reportlab.pdfgen import canvas
 from reportlab.pdfbase import pdfmetrics
 from reportlab.pdfbase.ttfonts import TTFont
-
+if not st.session_state.get("authenticated", False):
+    st.switch_page("app.py")
 GREEN = colors.HexColor("#2F5D2E")
 LIGHT_ROW = colors.HexColor("#F3F5F3")
 BORDER = colors.HexColor("#2F5D2E")

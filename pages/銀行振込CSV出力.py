@@ -19,7 +19,8 @@ try:
     from ui.sidebar import render_sidebar
 except Exception:
     render_sidebar = None
-
+if not st.session_state.get("authenticated", False):
+    st.switch_page("app.py")
 
 # =========================
 # 正規化
