@@ -12,6 +12,10 @@ def apply_global_style():
         radial-gradient(700px 320px at 50% 60%, rgba(60,255,122,0.05), transparent 55%),
         linear-gradient(180deg, #0A0F18 0%, #070A10 65%, #05070C 100%) !important;
     }
+    /* ===== Streamlit Cloudの上部メニューを非表示 ===== */
+    header[data-testid="stHeader"]{
+        display: none;
+    }
 
     /* コンテンツ幅/余白（任意：見た目安定） */
     .block-container{
