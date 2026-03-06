@@ -1,4 +1,11 @@
 import streamlit as st
+import streamlit as st
+
+from ui.ui_style import apply_global_style
+from ui.sidebar import render_sidebar
+
+apply_global_style()
+render_sidebar()
 
 # ===== パスワード認証 =====
 def check_password():
@@ -24,10 +31,3 @@ if not check_password():
     st.stop()
 
 
-import streamlit as st
-
-from ui.ui_style import apply_global_style
-from ui.sidebar import render_sidebar
-
-apply_global_style()
-render_sidebar()
