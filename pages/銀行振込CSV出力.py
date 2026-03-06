@@ -175,7 +175,7 @@ def to_shiftjis_bytes(df: pd.DataFrame) -> bytes:
 # =========================
 # UI
 # =========================
-st.set_page_config(page_title="銀行振込CSV出力（GMOあおぞら）", layout="wide")
+st.set_page_config(page_title="銀行振込CSV出力", layout="wide")
 
 if apply_global_style:
     apply_global_style()
