@@ -96,7 +96,7 @@ def get_last_confirmed_at():
         FROM public.salary_confirms
     """)
     return (row or {}).get("last_confirmed_at")
-progress.progress(20)
+
 def get_sales_total(target_month: str):
     # payments.paid_at から月次売上を集計
     progress.progress(40)
