@@ -337,13 +337,6 @@ with tab_edit:
             with c3:
                 # st.markdown("**銀行情報**")
                 # st.caption("銀行→支店を検索して選択し、口座情報を入力します。")
-                st.write("DEBUG row:", {
-                    "bank_code": row.get("bank_code"),
-                    "branch_code": row.get("branch_code"),
-                    "bank_name": row.get("bank_name"),
-                    "bank_branch": row.get("bank_branch"),
-                })
-
                 # sid別キー
                 k_bank_kw     = f"bank_kw_{sid}"
                 k_bank_sel    = f"bank_sel_{sid}"
