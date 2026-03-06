@@ -449,5 +449,53 @@ def q_staff_sales_detail_month(year_month: str, staff_id: str):
         limit 2000
     """, [year_month, staff_id])
 
+def q_baito_mapping_detail_month(year_month: str):
+    """
+    バイトに帰属している売上明細のうち、
+    ドリンクバック以外を『親staff』へマッピングすべき候補一覧を返す。
+    月判定は business_date ベース。
+    """
+    return fetch_df("""
+        select
+          oi.business_date,
+          oi.created_at,
+          oi.item_id,
+          oi.order_id,
+          oi.menu_id,
+          m.name as menu_name,
+          c.name as category_name,
+          coalesce(c.is_drink_back, false) as is_drink_back,
+          oi.qty,
+          oi.unit_price,
+          (oi.qty * oi.unit_price) as line_total,
 
+          oi.credit_staff_id as baito_staff_id,
+          bs.name as baito_staff_name,
+          bs.parent_id as mapped_staff_id,
+          ps.name as mapped_staff_name,
+          bs.parent_id_2 as sub_parent_id,
+
+          case
+            when coalesce(c.is_drink_back, false) = true then '対象外（ドリンクバック）'
+            when bs.type <> 'baito' then '対象外（バイト以外）'
+            when bs.parent_id is null or trim(bs.parent_id::text) = '' then '親未設定'
+            when bs.parent_id_2 is not null and trim(bs.parent_id_2::text) <> '' then '親2あり（要確認）'
+            else '親へマッピング'
+          end as mapping_status
+        from public.order_items oi
+        join public.orders o
+          on o.order_id = oi.order_id
+        left join public.menu m
+          on m.menu_id = oi.menu_id
+        left join public.category c
+          on c.category_id = m.category_id
+        join public.staff bs
+          on bs.staff_id::text = oi.credit_staff_id::text
+        left join public.staff ps
+          on ps.staff_id::text = bs.parent_id::text
+        where oi.is_paid = true
+          and to_char(oi.business_date, 'YYYY-MM') = %s
+          and bs.type = 'baito'
+        order by oi.business_date desc, oi.created_at desc, oi.order_id desc
+    """, [year_month])
 

@@ -9,12 +9,16 @@ from queries import (
     q_staff_master_all,
     q_sales_total_month,
     q_staff_sales_detail_month,
+    q_baito_mapping_detail_month,
 )
+
 if not st.session_state.get("authenticated", False):
     st.switch_page("app.py")
+
 st.set_page_config(page_title="売上分析", layout="wide")
 apply_global_style()
 render_sidebar()
+
 st.markdown(
     """
 <style>
@@ -33,16 +37,42 @@ st.markdown(
   background: rgba(255,255,255,0.03);
 }
 hr{ border: none; border-top: 1px solid rgba(255,255,255,0.12); margin: 1.0rem 0; }
+.section-title{
+  font-size: 1.45rem;
+  font-weight: 900;
+  margin: 0.4rem 0 0.6rem 0;
+}
+.badge{
+  display:inline-block;
+  padding: 0.12rem 0.6rem;
+  border-radius: 999px;
+  background: rgba(60,255,122,0.14);
+  color: rgba(60,255,122,0.95);
+  font-weight: 800;
+  font-size: 0.85rem;
+  margin-left: 0.4rem;
+  vertical-align: middle;
+}
+.hint{
+  color: rgba(255,255,255,0.62);
+  font-size: 0.92rem;
+}
 </style>
 """,
     unsafe_allow_html=True,
 )
+
 st.markdown('<div class="big-title">🧾売上分析</div>', unsafe_allow_html=True)
-st.markdown('<div class="subtle">対象月の合計売上と、担当者別の売上明細を確認します</div>', unsafe_allow_html=True)
+st.markdown(
+    '<div class="subtle">対象月の合計売上、担当者別売上明細、バイト明細の親スタッフマッピング候補を確認します</div>',
+    unsafe_allow_html=True,
+)
 st.markdown("<hr/>", unsafe_allow_html=True)
+
 
 def to_year_month(d: date) -> str:
     return d.strftime("%Y-%m")
+
 
 # =============================
 # 対象月
@@ -55,7 +85,6 @@ with c1:
     year_month = to_year_month(d)
 
 with c2:
-    # 月合計売上（KPI）
     try:
         df_total = q_sales_total_month(year_month)
         total = int(df_total["sales_total"].iloc[0]) if not df_total.empty else 0
@@ -70,6 +99,9 @@ with c2:
           <div style="font-size:2.1rem; font-weight:900; margin-top:0.25rem;">
             ¥ {total:,.0f}
           </div>
+          <div class="hint" style="margin-top:0.35rem;">
+            ※ payments.business_date ベースで集計
+          </div>
         </div>
         """,
         unsafe_allow_html=True,
@@ -77,128 +109,291 @@ with c2:
 
 st.markdown("<hr/>", unsafe_allow_html=True)
 
-# =============================
-# 担当者選択
-# =============================
-df_staff = q_staff_master_all().copy()
-df_staff["staff_id"] = df_staff["staff_id"].astype(str)
+tab1, tab2 = st.tabs(["売上分析", "バイト明細マッピング"])
 
-# 表示ラベル（ID順）
-df_staff = df_staff.sort_values("staff_id")
-staff_opts = [""] + df_staff.apply(lambda r: f"{r['staff_id']}｜{r['name']}", axis=1).tolist()
+# =========================================================
+# Tab1: 売上分析（既存）
+# =========================================================
+with tab1:
+    # =============================
+    # 担当者選択
+    # =============================
+    df_staff = q_staff_master_all().copy()
+    df_staff["staff_id"] = df_staff["staff_id"].astype(str)
 
-left, right = st.columns([1.25, 2.75], gap="large")
+    df_staff = df_staff.sort_values("staff_id")
 
-with left:
-    st.markdown('<div class="section-title">担当者を選択<span class="badge">検索</span></div>', unsafe_allow_html=True)
-    kw = st.text_input("検索（名前 / staff_id）", "")
+    left, right = st.columns([1.25, 2.75], gap="large")
 
-    df_pick = df_staff.copy()
-    if kw.strip():
-        k = kw.strip().lower()
-        df_pick = df_pick[
-            df_pick["staff_id"].str.lower().str.contains(k)
-            | df_pick["name"].astype(str).str.lower().str.contains(k)
-        ]
+    with left:
+        st.markdown('<div class="section-title">担当者を選択<span class="badge">検索</span></div>', unsafe_allow_html=True)
+        kw = st.text_input("検索（名前 / staff_id）", "", key="sales_kw")
 
-    df_pick = df_pick.sort_values("staff_id")
-    staff_opts2 = [""] + df_pick.apply(lambda r: f"{r['staff_id']}｜{r['name']}", axis=1).tolist()
-    staff_label = st.selectbox("担当者", staff_opts2, index=0)
+        df_pick = df_staff.copy()
+        if kw.strip():
+            k = kw.strip().lower()
+            df_pick = df_pick[
+                df_pick["staff_id"].str.lower().str.contains(k)
+                | df_pick["name"].astype(str).str.lower().str.contains(k)
+            ]
 
-    st.caption("一覧（参照用）")
-    st.dataframe(
-        df_pick[["staff_id", "name", "type"]].rename(columns={"staff_id":"ID","name":"名前","type":"種別"}),
-        use_container_width=True,
-        hide_index=True
+        df_pick = df_pick.sort_values("staff_id")
+        staff_opts2 = [""] + df_pick.apply(lambda r: f"{r['staff_id']}｜{r['name']}", axis=1).tolist()
+        staff_label = st.selectbox("担当者", staff_opts2, index=0, key="sales_staff")
+
+        st.caption("一覧（参照用）")
+        st.dataframe(
+            df_pick[["staff_id", "name", "type"]].rename(columns={"staff_id": "ID", "name": "名前", "type": "種別"}),
+            use_container_width=True,
+            hide_index=True,
+        )
+
+    with right:
+        st.markdown('<div class="section-title">売上明細</div>', unsafe_allow_html=True)
+        st.markdown('<div class="hint">担当者を選ぶと、対象月に紐づく売上明細を一覧表示します。</div>', unsafe_allow_html=True)
+        st.markdown("<hr/>", unsafe_allow_html=True)
+
+        if not staff_label:
+            st.info("左で担当者を選択してください。")
+        else:
+            staff_id = staff_label.split("｜")[0].strip()
+
+            f1, f2, f3 = st.columns([1.3, 1.3, 1.4])
+            with f1:
+                keyword_item = st.text_input("明細検索（商品名/カテゴリ）", "", key="sales_detail_kw")
+            with f2:
+                limit = st.selectbox("表示件数", [200, 500, 1000, 2000], index=1, key="sales_limit")
+            with f3:
+                st.caption("※重い場合は件数を下げてね")
+
+            try:
+                df_detail = q_staff_sales_detail_month(year_month, staff_id).copy()
+            except Exception as e:
+                st.error(f"売上明細の取得に失敗: {e}")
+                st.stop()
+
+            if df_detail.empty:
+                st.info("この担当者の売上明細がありません。")
+            else:
+                if keyword_item.strip():
+                    k = keyword_item.strip().lower()
+                    cols = [c for c in ["menu_name", "category_name"] if c in df_detail.columns]
+                    if cols:
+                        mask = False
+                        for c in cols:
+                            mask = mask | df_detail[c].astype(str).str.lower().str.contains(k)
+                        df_detail = df_detail[mask]
+
+                if "created_at" in df_detail.columns:
+                    df_detail = df_detail.sort_values("created_at", ascending=False)
+
+                df_detail = df_detail.head(int(limit))
+
+                if "line_total" in df_detail.columns:
+                    staff_total = int(pd.to_numeric(df_detail["line_total"], errors="coerce").fillna(0).sum())
+                    st.metric("担当者売上", f"¥ {staff_total:,.0f}")
+
+                col_map = {
+                    "business_date": "営業日",
+                    "created_at": "日時",
+                    "order_id": "注文ID",
+                    "menu_name": "メニュー",
+                    "category_name": "カテゴリ",
+                    "qty": "数量",
+                    "unit_price": "単価",
+                    "line_total": "小計",
+                    "is_paid": "支払済",
+                }
+
+                df_show = df_detail.rename(columns=col_map)
+
+                preferred = [
+                    "営業日",
+                    "日時",
+                    "注文ID",
+                    "メニュー",
+                    "カテゴリ",
+                    "数量",
+                    "単価",
+                    "小計",
+                    "支払済",
+                ]
+                show_cols = [c for c in preferred if c in df_show.columns]
+
+                st.dataframe(
+                    df_show[show_cols],
+                    use_container_width=True,
+                    hide_index=True,
+                )
+
+                csv = df_detail.to_csv(index=False).encode("utf-8-sig")
+                st.download_button(
+                    "この明細をCSVダウンロード",
+                    csv,
+                    file_name=f"sales_detail_{year_month}_{staff_id}.csv",
+                    use_container_width=True,
+                    key="sales_detail_csv",
+                )
+
+# =========================================================
+# Tab2: バイト明細マッピング
+# =========================================================
+with tab2:
+    st.markdown('<div class="section-title">バイト明細マッピング</div>', unsafe_allow_html=True)
+    st.markdown(
+        '<div class="hint">バイト帰属の明細のうち、ドリンクバック以外は親スタッフへ付け替えるべき候補を一覧表示します。</div>',
+        unsafe_allow_html=True,
     )
-
-with right:
-    st.markdown('<div class="section-title">売上明細</div>', unsafe_allow_html=True)
-    st.markdown('<div class="hint">担当者を選ぶと、対象月に紐づく売上明細を一覧表示します。</div>', unsafe_allow_html=True)
     st.markdown("<hr/>", unsafe_allow_html=True)
 
-    if not staff_label:
-        st.info("左で担当者を選択してください。")
-        st.stop()
-
-    staff_id = staff_label.split("｜")[0].strip()
-
-    # 追加おすすめ：明細の簡易フィルタ
-    f1, f2, f3 = st.columns([1.3, 1.3, 1.4])
-    with f1:
-        keyword_item = st.text_input("明細検索（商品名/カテゴリ）", "")
-    with f2:
-        limit = st.selectbox("表示件数", [200, 500, 1000, 2000], index=1)
-    with f3:
-        st.caption("※重い場合は件数を下げてね")
-
     try:
-        df_detail = q_staff_sales_detail_month(year_month, staff_id).copy()
+        df_map = q_baito_mapping_detail_month(year_month).copy()
     except Exception as e:
-        st.error(f"売上明細の取得に失敗: {e}")
+        st.error(f"バイト明細マッピングの取得に失敗: {e}")
         st.stop()
 
-    if df_detail.empty:
-        st.info("この担当者の売上明細がありません。")
+    if df_map.empty:
+        st.info("対象月に、バイトへ帰属している売上明細がありません。")
         st.stop()
+
+    # 対象判定
+    df_map["is_mapping_target"] = df_map["mapping_status"].eq("親へマッピング")
+
+    # KPI
+    k1, k2, k3, k4 = st.columns(4)
+    with k1:
+        st.metric("対象明細数", f"{int(df_map['is_mapping_target'].sum())}")
+    with k2:
+        target_amt = int(pd.to_numeric(df_map.loc[df_map["is_mapping_target"], "line_total"], errors="coerce").fillna(0).sum())
+        st.metric("対象売上合計", f"¥ {target_amt:,.0f}")
+    with k3:
+        no_parent_cnt = int((df_map["mapping_status"] == "親未設定").sum())
+        st.metric("親未設定", f"{no_parent_cnt}")
+    with k4:
+        multi_parent_cnt = int((df_map["mapping_status"] == "親2あり（要確認）").sum())
+        st.metric("親2あり", f"{multi_parent_cnt}")
+
+    st.markdown("---")
 
     # フィルタ
-    if keyword_item.strip():
-        k = keyword_item.strip().lower()
-        cols = [c for c in ["item_name", "category_name"] if c in df_detail.columns]
+    f1, f2, f3, f4 = st.columns([1.2, 1.3, 1.3, 1.6])
+    with f1:
+        show_mode = st.selectbox(
+            "表示",
+            ["全件", "親へマッピングのみ", "親未設定のみ", "親2あり（要確認）のみ"],
+            index=1,
+            key="baito_map_show_mode",
+        )
+    with f2:
+        kw_baito = st.text_input("検索（バイト名/ID）", "", key="baito_map_kw")
+    with f3:
+        kw_item = st.text_input("検索（メニュー/カテゴリ）", "", key="baito_map_item_kw")
+    with f4:
+        limit_map = st.selectbox("表示件数", [200, 500, 1000, 2000], index=1, key="baito_map_limit")
+
+    filtered = df_map.copy()
+
+    if show_mode == "親へマッピングのみ":
+        filtered = filtered[filtered["mapping_status"] == "親へマッピング"]
+    elif show_mode == "親未設定のみ":
+        filtered = filtered[filtered["mapping_status"] == "親未設定"]
+    elif show_mode == "親2あり（要確認）のみ":
+        filtered = filtered[filtered["mapping_status"] == "親2あり（要確認）"]
+
+    if kw_baito.strip():
+        k = kw_baito.strip().lower()
+        filtered = filtered[
+            filtered["baito_staff_id"].astype(str).str.lower().str.contains(k)
+            | filtered["baito_staff_name"].astype(str).str.lower().str.contains(k)
+        ]
+
+    if kw_item.strip():
+        k = kw_item.strip().lower()
+        cols = [c for c in ["menu_name", "category_name"] if c in filtered.columns]
         if cols:
             mask = False
             for c in cols:
-                mask = mask | df_detail[c].astype(str).str.lower().str.contains(k)
-            df_detail = df_detail[mask]
+                mask = mask | filtered[c].astype(str).str.lower().str.contains(k)
+            filtered = filtered[mask]
 
-    # 並び + limit
-    if "created_at" in df_detail.columns:
-        df_detail = df_detail.sort_values("created_at", ascending=False)
+    if "created_at" in filtered.columns:
+        filtered = filtered.sort_values(["business_date", "created_at"], ascending=[False, False])
 
-    df_detail = df_detail.head(int(limit))
+    filtered = filtered.head(int(limit_map))
 
+    # 集計サマリー（親別）
+    st.markdown("### 親スタッフ別 集計")
+    df_target = df_map[df_map["mapping_status"] == "親へマッピング"].copy()
 
-    # KPI（担当者の月売上合計）
-    if "line_total" in df_detail.columns:
-        staff_total = int(pd.to_numeric(df_detail["line_total"], errors="coerce").fillna(0).sum())
-        st.metric("担当者売上", f"¥ {staff_total:,.0f}")
+    if not df_target.empty:
+        summary = (
+            df_target.groupby(["mapped_staff_id", "mapped_staff_name"], dropna=False)["line_total"]
+            .sum()
+            .reset_index()
+            .sort_values("line_total", ascending=False)
+        )
+        summary = summary.rename(columns={
+            "mapped_staff_id": "親staff_id",
+            "mapped_staff_name": "親スタッフ名",
+            "line_total": "付替対象売上",
+        })
+        st.dataframe(summary, use_container_width=True, hide_index=True)
+    else:
+        st.info("親へマッピング対象の明細はありません。")
 
+    st.markdown("### 明細一覧")
 
-    # 日本語ヘッダー
     col_map = {
+        "business_date": "営業日",
         "created_at": "日時",
         "order_id": "注文ID",
         "menu_name": "メニュー",
+        "category_name": "カテゴリ",
         "qty": "数量",
         "unit_price": "単価",
         "line_total": "小計",
-        "is_paid": "支払済",
+        "baito_staff_id": "現帰属ID",
+        "baito_staff_name": "現帰属者（バイト）",
+        "mapped_staff_id": "親staff_id",
+        "mapped_staff_name": "親スタッフ名",
+        "sub_parent_id": "親2",
+        "mapping_status": "状態",
     }
 
-    df_show = df_detail.rename(columns=col_map)
-
-
-    # 表示順
-    preferred = [
-        "日時",
-        "注文ID",
-        "メニュー",
-        "数量",
-        "単価",
-        "小計",
-        "支払済",
+    show_cols_raw = [
+        "business_date",
+        "created_at",
+        "order_id",
+        "menu_name",
+        "category_name",
+        "qty",
+        "unit_price",
+        "line_total",
+        "baito_staff_id",
+        "baito_staff_name",
+        "mapped_staff_id",
+        "mapped_staff_name",
+        "sub_parent_id",
+        "mapping_status",
     ]
-
-    show_cols = [c for c in preferred if c in df_show.columns]
-
+    show_cols_raw = [c for c in show_cols_raw if c in filtered.columns]
 
     st.dataframe(
-        df_show[show_cols],
+        filtered[show_cols_raw].rename(columns=col_map),
         use_container_width=True,
-        hide_index=True
+        hide_index=True,
     )
 
-    # 追加おすすめ：CSV出力（現場で便利）
-    csv = df_detail.to_csv(index=False).encode("utf-8-sig")
-    st.download_button("この明細をCSVダウンロード", csv, file_name=f"sales_detail_{year_month}_{staff_id}.csv", use_container_width=True)
+    csv_map = filtered.to_csv(index=False).encode("utf-8-sig")
+    st.download_button(
+        "このマッピング一覧をCSVダウンロード",
+        csv_map,
+        file_name=f"baito_mapping_{year_month}.csv",
+        use_container_width=True,
+        key="baito_mapping_csv",
+    )
+
+    st.info(
+        "このタブは確認用です。実際に給与へ反映するには、同じ『バイト→親staffへ付替』ロジックを "
+        "給与集計用view / query側にも入れる必要があります。"
+    )
