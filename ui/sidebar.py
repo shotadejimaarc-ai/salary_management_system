@@ -27,8 +27,8 @@ def render_sidebar():
       </div>
     </div>
     """, unsafe_allow_html=True)
-    st.sidebar.caption("SIDEBAR_RENDERED")
 
+    
     st.sidebar.page_link("pages/Home.py", label="HOME")
 
     st.sidebar.markdown("---")
