@@ -11,6 +11,10 @@ from db import fetch_one, fetch_all
 
 st.set_page_config(page_title="給与管理システム", layout="wide")
 
+from ui.loading import show_loading, clear_loading
+
+loading_box, progress = show_loading("画面を読み込み中です...")
+
 # ===== ロゴパス（Homeの場所が変わっても拾える）=====
 HERE = Path(__file__).resolve()
 CANDIDATES = [
@@ -42,6 +46,7 @@ last_month_ym = f"{last_month_year:04d}-{last_month_month:02d}"
 prev_month_ym = f"{prev_month_year:04d}-{prev_month_month:02d}"
 
 # ===== 集計取得 =====
+progress.progress(20)
 def safe_int(v, default=0):
     try:
         if v is None:
@@ -49,7 +54,7 @@ def safe_int(v, default=0):
         return int(float(v))
     except Exception:
         return default
-
+progress.progress(40)
 def get_confirm_status(target_month: str):
     # staffテーブル上の人数
     staff_total_row = fetch_one("""
@@ -84,14 +89,14 @@ def get_confirm_status(target_month: str):
         "staff_confirmed": safe_int((staff_confirmed_row or {}).get("cnt")),
         "baito_confirmed": safe_int((baito_confirmed_row or {}).get("cnt")),
     }
-
+progress.progress(60)
 def get_last_confirmed_at():
     row = fetch_one("""
         SELECT MAX(confirmed_at) AS last_confirmed_at
         FROM public.salary_confirms
     """)
     return (row or {}).get("last_confirmed_at")
-
+progress.progress(80)
 def get_sales_total(target_month: str):
     # payments.paid_at から月次売上を集計
     row = fetch_one("""
@@ -112,6 +117,10 @@ if sales_prev > 0:
     sales_diff_text = f"{sales_diff_pct:+.1f}%"
 else:
     sales_diff_text = "—"
+
+
+progress.progress(100)
+clear_loading(loading_box, progress)
 
 # ===== 高級バーUI（フォント＋背景＋タイポ＋カード）=====
 st.markdown(
