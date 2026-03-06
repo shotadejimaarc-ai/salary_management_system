@@ -350,28 +350,31 @@ with tab_edit:
                 # --- 銀行検索/選択 ---
                 bank_kw = st.text_input("銀行検索（コード/名称）", value="", key=k_bank_kw)
                 banks_df = q_banks(bank_kw)
-
                 bank_opts_raw = [f"{r.bank_code}｜{r.bank_name}" for r in banks_df.itertuples()]
 
                 current_bank_code = str(row.get("bank_code") or "").strip()
                 current_bank_name = str(row.get("bank_name") or "").strip()
-
-                current_bank_opt = ""
+                # 検索結果候補
+                bank_opts_raw = []
+                seen_bank = set()
+                
                 if current_bank_code:
-                    current_bank_opt = f"{current_bank_code}｜{current_bank_name}"
+                    label = f"{current_bank_code}｜{current_bank_name or '（登録済み銀行）'}"
+                    bank_opts_raw.append(label)
+                    seen_bank.add(current_bank_code)
 
-                if current_bank_opt and current_bank_opt not in bank_opts_raw:
-                    bank_opts_raw = [current_bank_opt] + bank_opts_raw
+                # 次に検索結果を追加
+                for r in banks_df.itertuples():
+                    code = str(r.bank_code).strip()
+                    name = str(r.bank_name).strip()
+                    if code not in seen_bank:
+                        bank_opts_raw.append(f"{code}｜{name}")
+                        seen_bank.add(code)
 
                 bank_opts = [""] + bank_opts_raw
 
-                current_bank_code = str(row.get("bank_code") or "").strip()
-                bank_default = 0
-                if current_bank_code:
-                    for i, opt in enumerate(bank_opts):
-                        if opt.startswith(current_bank_code + "｜"):
-                            bank_default = i
-                            break
+                # 初期表示は登録済み銀行があればそれ
+                bank_default = 1 if current_bank_code and len(bank_opts) > 1 else 0
 
                 bank_sel = st.selectbox("銀行を選択", bank_opts, index=bank_default, key=k_bank_sel)
 
@@ -386,38 +389,39 @@ with tab_edit:
                 branch_label = "支店検索（コード/名称）" if not is_yucho else "店名/店番検索（コード/名称）"
                 branch_kw = st.text_input(branch_label, value="", key=k_branch_kw)
 
+                current_branch_code = str(row.get("branch_code") or "").strip()
+                current_branch_name = str(row.get("bank_branch") or "").strip()
+
                 branches_df = (
                     q_branches(picked_bank_code, branch_kw)
                     if picked_bank_code
                     else pd.DataFrame(columns=["branch_code", "branch_name"])
                 )
 
-                branch_opts_raw = [f"{r.branch_code}｜{r.branch_name}" for r in branches_df.itertuples()]
+                branch_opts_raw = []
+                seen_branch = set()
 
-                current_branch_code = str(row.get("branch_code") or "").strip()
-                current_branch_name = str(row.get("bank_branch") or "").strip()
+                # まず staffマスタ登録済みの支店を先頭に入れる
+                if picked_bank_code and current_branch_code:
+                    label = f"{current_branch_code}｜{current_branch_name or '（登録済み支店）'}"
+                    branch_opts_raw.append(label)
+                    seen_branch.add(current_branch_code)
 
-                current_branch_opt = ""
-                if current_branch_code:
-                    current_branch_opt = f"{current_branch_code}｜{current_branch_name}"
-
-                if current_branch_opt and current_branch_opt not in branch_opts_raw:
-                    branch_opts_raw = [current_branch_opt] + branch_opts_raw
+                # 次に検索結果を追加
+                for r in branches_df.itertuples():
+                    code = str(r.branch_code).strip()
+                    name = str(r.branch_name).strip()
+                    if code not in seen_branch:
+                        branch_opts_raw.append(f"{code}｜{name}")
+                        seen_branch.add(code)
 
                 if is_yucho:
-                    branch_opts = [""] + branch_opts_raw
                     branch_select_label = "店名（店番）を選択"
                 else:
-                    branch_opts = [""] + branch_opts_raw
                     branch_select_label = "支店を選択"
 
-                current_branch_code = str(row.get("branch_code") or "").strip()
-                branch_default = 0
-                if picked_bank_code and current_branch_code:
-                    for i, opt in enumerate(branch_opts):
-                        if opt.startswith(current_branch_code + "｜"):
-                            branch_default = i
-                            break
+                branch_opts = [""] + branch_opts_raw
+                branch_default = 1 if picked_bank_code and current_branch_code and len(branch_opts) > 1 else 0
 
                 branch_sel = st.selectbox(
                     branch_select_label,
