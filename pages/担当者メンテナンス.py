@@ -335,8 +335,8 @@ with tab_edit:
                 )
 
             with c3:
-                st.markdown("**銀行情報**")
-                st.caption("銀行→支店を検索して選択し、口座情報を入力します。")
+                # st.markdown("**銀行情報**")
+                # st.caption("銀行→支店を検索して選択し、口座情報を入力します。")
 
                 # sid別キー
                 k_bank_kw     = f"bank_kw_{sid}"
