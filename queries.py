@@ -62,16 +62,16 @@ def q_drinkback_items(year_month: str, staff_id: str):
             params=[staff_id, year_month],
         )
 
-def q_staff_master_all():
-    with get_conn() as conn:
-        return pd.read_sql(
-            """
-            select staff_id, name, type, parent_id, hourly_wage, transportation_allowance
-            from staff
-            order by staff_id
-            """,
-            conn,
-        )
+# def q_staff_master_all():
+#     with get_conn() as conn:
+#         return pd.read_sql(
+#             """
+#             select staff_id, name, type, parent_id, hourly_wage, transportation_allowance
+#             from staff
+#             order by staff_id
+#             """,
+#             conn,
+#         )
 
 def q_gross_reward_month(year_month: str):
     with get_conn() as conn:
@@ -109,6 +109,7 @@ def q_staff_master_all():
         select
           staff_id, name, type, parent_id, parent_id_2,
           hourly_wage, transportation_allowance,
+          bank_code,branch_code,
           bank_name, bank_branch, bank_account_type, bank_account_number, bank_account_holder,
           payment_method
         from staff
