@@ -303,6 +303,9 @@ with col3:
         <div class="dash-sub">
             先月売上
         </div>
+        <div class="dash-sub">
+            
+        </div>
     </div>
     """, unsafe_allow_html=True)
 
@@ -313,6 +316,9 @@ with col4:
         <div class="dash-value">{sales_diff_text}</div>
         <div class="dash-sub">
             前月（{prev_month_ym}）比
+        </div>
+        <div class="dash-sub">
+            
         </div>
     </div>
     """, unsafe_allow_html=True)
