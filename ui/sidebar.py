@@ -52,6 +52,6 @@ def render_sidebar():
 
     st.sidebar.markdown("---")
 
-    if st.sidebar.button("ログアウト"):
-        st.session_state.authenticated = False
+    if st.sidebar.button("ログアウト", key="sidebar_logout_button"):
+        st.session_state.clear()
         st.switch_page("app.py")
