@@ -478,7 +478,7 @@ with tab_edit:
 
             update_staff_master(payload)
             st.success("保存しました。")
-            st.rerun()
+            #st.rerun()
 
 # =========================================================
 # Tab: Tree
