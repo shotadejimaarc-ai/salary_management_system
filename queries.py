@@ -536,22 +536,30 @@ def exec_baito_mapping_update_month(year_month: str):
     戻り値: 更新件数
     """
     sql = """
+        with target as (
+            select
+                oi.item_id,
+                bs.parent_id as new_staff_id
+            from public.order_items oi
+            join public.menu m
+              on m.menu_id = oi.menu_id
+            left join public.category c
+              on c.category_id = m.category_id
+            join public.staff bs
+              on bs.staff_id::text = oi.credit_staff_id::text
+            where oi.is_paid = true
+              and to_char(oi.business_date, 'YYYY-MM') = %s
+              and bs.type = 'baito'
+              and coalesce(c.is_drink_back, false) = false
+              and bs.parent_id is not null
+              and trim(bs.parent_id::text) <> ''
+              and (bs.parent_id_2 is null or trim(bs.parent_id_2::text) = '')
+              and oi.credit_staff_id::text <> bs.parent_id::text
+        )
         update public.order_items oi
-        set credit_staff_id = bs.parent_id
-        from public.menu m
-        left join public.category c
-          on c.category_id = m.category_id
-        join public.staff bs
-          on bs.staff_id::text = oi.credit_staff_id::text
-        where m.menu_id = oi.menu_id
-          and oi.is_paid = true
-          and to_char(oi.business_date, 'YYYY-MM') = %s
-          and bs.type = 'baito'
-          and coalesce(c.is_drink_back, false) = false
-          and bs.parent_id is not null
-          and trim(bs.parent_id::text) <> ''
-          and (bs.parent_id_2 is null or trim(bs.parent_id_2::text) = '')
-          and oi.credit_staff_id::text <> bs.parent_id::text
+        set credit_staff_id = target.new_staff_id
+        from target
+        where oi.item_id = target.item_id
     """
     with get_conn() as conn:
         cur = conn.cursor()

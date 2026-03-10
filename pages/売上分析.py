@@ -307,196 +307,196 @@ with tab2:
 
     # 実行エリア
     # 実行前サマリー
-target_df = df_map[df_map["mapping_status"] == "親へマッピング"].copy()
-target_count = int(len(target_df))
-target_amount = int(pd.to_numeric(target_df["line_total"], errors="coerce").fillna(0).sum()) if not target_df.empty else 0
+    target_df = df_map[df_map["mapping_status"] == "親へマッピング"].copy()
+    target_count = int(len(target_df))
+    target_amount = int(pd.to_numeric(target_df["line_total"], errors="coerce").fillna(0).sum()) if not target_df.empty else 0
 
-st.markdown("### 一括マッピング実行")
+    st.markdown("### 一括マッピング実行")
 
-open_col1, open_col2 = st.columns([1.4, 2.6])
+    open_col1, open_col2 = st.columns([1.4, 2.6])
 
-with open_col1:
-    if st.button(
-        "更新内容を確認する",
-        disabled=(target_count == 0),
-        use_container_width=True,
-        key="baito_map_open_confirm",
-    ):
-        st.session_state["baito_map_confirm_open"] = True
-
-with open_col2:
-    if target_count == 0:
-        st.info("この月に更新対象はありません。")
-    else:
-        st.caption(f"対象月: {year_month} / 更新候補: {target_count}件 / 対象売上: ¥{target_amount:,}")
-
-# 確認ダイアログ風UI
-if st.session_state.get("baito_map_confirm_open", False) and target_count > 0:
-    st.markdown(
-        f"""
-        <div style="
-            margin-top: 0.6rem;
-            margin-bottom: 1rem;
-            padding: 1rem 1rem 1rem 1rem;
-            border-radius: 16px;
-            border: 1px solid rgba(255,255,255,0.14);
-            background: rgba(255, 183, 77, 0.08);
-        ">
-          <div style="font-size:1.05rem; font-weight:900; margin-bottom:0.45rem;">
-            ⚠ 一括マッピング実行の確認
-          </div>
-          <div style="line-height:1.7;">
-            対象月 <b>{year_month}</b> のうち、<br>
-            <b>バイト帰属 × 非ドリンクバック × 親1のみ設定</b> の明細について、<br>
-            <code>order_items.credit_staff_id</code> を <b>親staff_id</b> に更新します。<br><br>
-            更新対象件数: <b>{target_count:,}</b> 件<br>
-            対象売上合計: <b>¥ {target_amount:,}</b>
-          </div>
-        </div>
-        """,
-        unsafe_allow_html=True,
-    )
-
-    st.warning(
-        "実行後は対象明細の帰属先が変わります。"
-        "売上分析・給与計算の結果も変わるため、対象月をよく確認してから実行してください。"
-    )
-
-    final_check = st.checkbox(
-        f"{year_month} の対象明細を親スタッフへ更新することを確認しました",
-        value=False,
-        key="baito_map_final_check",
-    )
-
-    confirm_col1, confirm_col2, confirm_col3 = st.columns([1.2, 1.6, 1.2])
-
-    with confirm_col1:
+    with open_col1:
         if st.button(
-            "キャンセル",
+            "更新内容を確認する",
+            disabled=(target_count == 0),
             use_container_width=True,
-            key="baito_map_cancel_confirm",
+            key="baito_map_open_confirm",
         ):
-            st.session_state["baito_map_confirm_open"] = False
-            st.rerun()
+            st.session_state["baito_map_confirm_open"] = True
 
-    with confirm_col2:
-        if st.button(
-            "最終実行：親スタッフへ一括マッピング",
-            type="primary",
-            disabled=not final_check,
-            use_container_width=True,
-            key="baito_map_execute_final",
-        ):
-            try:
-                affected = exec_baito_mapping_update_month(year_month)
-                st.session_state["baito_map_confirm_open"] = False
-                st.success(f"更新完了：{affected} 件の明細を親スタッフへ付け替えました。")
-                st.rerun()
-            except Exception as e:
-                st.error(f"一括更新に失敗しました: {e}")
-                st.stop()
+    with open_col2:
+        if target_count == 0:
+            st.info("この月に更新対象はありません。")
+        else:
+            st.caption(f"対象月: {year_month} / 更新候補: {target_count}件 / 対象売上: ¥{target_amount:,}")
 
-    with confirm_col3:
-        st.caption("※ 実行後は一覧を再読込します")
-
-    st.markdown("---")
-
-    # フィルタ
-    f1, f2, f3, f4 = st.columns([1.2, 1.3, 1.3, 1.6])
-    with f1:
-        show_mode = st.selectbox(
-            "表示",
-            ["全件", "親へマッピングのみ", "親未設定のみ", "親2あり（要確認）のみ", "対象外（ドリンクバック）のみ"],
-            index=1,
-            key="baito_map_show_mode",
+    # 確認ダイアログ風UI
+    if st.session_state.get("baito_map_confirm_open", False) and target_count > 0:
+        st.markdown(
+            f"""
+            <div style="
+                margin-top: 0.6rem;
+                margin-bottom: 1rem;
+                padding: 1rem 1rem 1rem 1rem;
+                border-radius: 16px;
+                border: 1px solid rgba(255,255,255,0.14);
+                background: rgba(255, 183, 77, 0.08);
+            ">
+            <div style="font-size:1.05rem; font-weight:900; margin-bottom:0.45rem;">
+                ⚠ 一括マッピング実行の確認
+            </div>
+            <div style="line-height:1.7;">
+                対象月 <b>{year_month}</b> のうち、<br>
+                <b>バイト帰属 × 非ドリンクバック × 親1のみ設定</b> の明細について、<br>
+                <code>order_items.credit_staff_id</code> を <b>親staff_id</b> に更新します。<br><br>
+                更新対象件数: <b>{target_count:,}</b> 件<br>
+                対象売上合計: <b>¥ {target_amount:,}</b>
+            </div>
+            </div>
+            """,
+            unsafe_allow_html=True,
         )
-    with f2:
-        kw_baito = st.text_input("検索（バイト名/ID）", "", key="baito_map_kw")
-    with f3:
-        kw_item = st.text_input("検索（メニュー/カテゴリ）", "", key="baito_map_item_kw")
-    with f4:
-        limit_map = st.selectbox("表示件数", [200, 500, 1000, 2000], index=1, key="baito_map_limit")
 
-    filtered = df_map.copy()
+        st.warning(
+            "実行後は対象明細の帰属先が変わります。"
+            "売上分析・給与計算の結果も変わるため、対象月をよく確認してから実行してください。"
+        )
 
-    if show_mode == "親へマッピングのみ":
-        filtered = filtered[filtered["mapping_status"] == "親へマッピング"]
-    elif show_mode == "親未設定のみ":
-        filtered = filtered[filtered["mapping_status"] == "親未設定"]
-    elif show_mode == "親2あり（要確認）のみ":
-        filtered = filtered[filtered["mapping_status"] == "親2あり（要確認）"]
-    elif show_mode == "対象外（ドリンクバック）のみ":
-        filtered = filtered[filtered["mapping_status"] == "対象外（ドリンクバック）"]
+        final_check = st.checkbox(
+            f"{year_month} の対象明細を親スタッフへ更新することを確認しました",
+            value=False,
+            key="baito_map_final_check",
+        )
 
-    if kw_baito.strip():
-        k = kw_baito.strip().lower()
-        filtered = filtered[
-            filtered["baito_staff_id"].astype(str).str.lower().str.contains(k)
-            | filtered["baito_staff_name"].astype(str).str.lower().str.contains(k)
+        confirm_col1, confirm_col2, confirm_col3 = st.columns([1.2, 1.6, 1.2])
+
+        with confirm_col1:
+            if st.button(
+                "キャンセル",
+                use_container_width=True,
+                key="baito_map_cancel_confirm",
+            ):
+                st.session_state["baito_map_confirm_open"] = False
+                st.rerun()
+
+        with confirm_col2:
+            if st.button(
+                "最終実行：親スタッフへ一括マッピング",
+                type="primary",
+                disabled=not final_check,
+                use_container_width=True,
+                key="baito_map_execute_final",
+            ):
+                try:
+                    affected = exec_baito_mapping_update_month(year_month)
+                    st.session_state["baito_map_confirm_open"] = False
+                    st.success(f"更新完了：{affected} 件の明細を親スタッフへ付け替えました。")
+                    st.rerun()
+                except Exception as e:
+                    st.error(f"一括更新に失敗しました: {e}")
+                    st.stop()
+
+        with confirm_col3:
+            st.caption("※ 実行後は一覧を再読込します")
+
+        st.markdown("---")
+
+        # フィルタ
+        f1, f2, f3, f4 = st.columns([1.2, 1.3, 1.3, 1.6])
+        with f1:
+            show_mode = st.selectbox(
+                "表示",
+                ["全件", "親へマッピングのみ", "親未設定のみ", "親2あり（要確認）のみ", "対象外（ドリンクバック）のみ"],
+                index=1,
+                key="baito_map_show_mode",
+            )
+        with f2:
+            kw_baito = st.text_input("検索（バイト名/ID）", "", key="baito_map_kw")
+        with f3:
+            kw_item = st.text_input("検索（メニュー/カテゴリ）", "", key="baito_map_item_kw")
+        with f4:
+            limit_map = st.selectbox("表示件数", [200, 500, 1000, 2000], index=1, key="baito_map_limit")
+
+        filtered = df_map.copy()
+
+        if show_mode == "親へマッピングのみ":
+            filtered = filtered[filtered["mapping_status"] == "親へマッピング"]
+        elif show_mode == "親未設定のみ":
+            filtered = filtered[filtered["mapping_status"] == "親未設定"]
+        elif show_mode == "親2あり（要確認）のみ":
+            filtered = filtered[filtered["mapping_status"] == "親2あり（要確認）"]
+        elif show_mode == "対象外（ドリンクバック）のみ":
+            filtered = filtered[filtered["mapping_status"] == "対象外（ドリンクバック）"]
+
+        if kw_baito.strip():
+            k = kw_baito.strip().lower()
+            filtered = filtered[
+                filtered["baito_staff_id"].astype(str).str.lower().str.contains(k)
+                | filtered["baito_staff_name"].astype(str).str.lower().str.contains(k)
+            ]
+
+        if kw_item.strip():
+            k = kw_item.strip().lower()
+            cols = [c for c in ["menu_name", "category_name"] if c in filtered.columns]
+            if cols:
+                mask = False
+                for c in cols:
+                    mask = mask | filtered[c].astype(str).str.lower().str.contains(k)
+                filtered = filtered[mask]
+
+        if "created_at" in filtered.columns:
+            filtered = filtered.sort_values(["business_date", "created_at"], ascending=[False, False])
+
+        filtered = filtered.head(int(limit_map))
+
+        st.markdown("### 明細一覧")
+
+        col_map = {
+            "business_date": "営業日",
+            "created_at": "日時",
+            "order_id": "注文ID",
+            "menu_name": "メニュー",
+            "category_name": "カテゴリ",
+            "qty": "数量",
+            "unit_price": "単価",
+            "line_total": "小計",
+            "baito_staff_id": "現帰属ID",
+            "baito_staff_name": "現帰属者（バイト）",
+            "mapped_staff_id": "親staff_id",
+            "mapped_staff_name": "親スタッフ名",
+            "sub_parent_id": "親2",
+            "mapping_status": "状態",
+        }
+
+        show_cols_raw = [
+            "business_date",
+            "created_at",
+            "order_id",
+            "menu_name",
+            "category_name",
+            "qty",
+            "unit_price",
+            "line_total",
+            "baito_staff_id",
+            "baito_staff_name",
+            "mapped_staff_id",
+            "mapped_staff_name",
+            "sub_parent_id",
+            "mapping_status",
         ]
+        show_cols_raw = [c for c in show_cols_raw if c in filtered.columns]
 
-    if kw_item.strip():
-        k = kw_item.strip().lower()
-        cols = [c for c in ["menu_name", "category_name"] if c in filtered.columns]
-        if cols:
-            mask = False
-            for c in cols:
-                mask = mask | filtered[c].astype(str).str.lower().str.contains(k)
-            filtered = filtered[mask]
+        st.dataframe(
+            filtered[show_cols_raw].rename(columns=col_map),
+            use_container_width=True,
+            hide_index=True,
+        )
 
-    if "created_at" in filtered.columns:
-        filtered = filtered.sort_values(["business_date", "created_at"], ascending=[False, False])
-
-    filtered = filtered.head(int(limit_map))
-
-    st.markdown("### 明細一覧")
-
-    col_map = {
-        "business_date": "営業日",
-        "created_at": "日時",
-        "order_id": "注文ID",
-        "menu_name": "メニュー",
-        "category_name": "カテゴリ",
-        "qty": "数量",
-        "unit_price": "単価",
-        "line_total": "小計",
-        "baito_staff_id": "現帰属ID",
-        "baito_staff_name": "現帰属者（バイト）",
-        "mapped_staff_id": "親staff_id",
-        "mapped_staff_name": "親スタッフ名",
-        "sub_parent_id": "親2",
-        "mapping_status": "状態",
-    }
-
-    show_cols_raw = [
-        "business_date",
-        "created_at",
-        "order_id",
-        "menu_name",
-        "category_name",
-        "qty",
-        "unit_price",
-        "line_total",
-        "baito_staff_id",
-        "baito_staff_name",
-        "mapped_staff_id",
-        "mapped_staff_name",
-        "sub_parent_id",
-        "mapping_status",
-    ]
-    show_cols_raw = [c for c in show_cols_raw if c in filtered.columns]
-
-    st.dataframe(
-        filtered[show_cols_raw].rename(columns=col_map),
-        use_container_width=True,
-        hide_index=True,
-    )
-
-    csv_map = filtered.to_csv(index=False).encode("utf-8-sig")
-    st.download_button(
-        "このマッピング一覧をCSVダウンロード",
-        csv_map,
-        file_name=f"baito_mapping_{year_month}.csv",
-        use_container_width=True,
-        key="baito_mapping_csv",
-    )
+        csv_map = filtered.to_csv(index=False).encode("utf-8-sig")
+        st.download_button(
+            "このマッピング一覧をCSVダウンロード",
+            csv_map,
+            file_name=f"baito_mapping_{year_month}.csv",
+            use_container_width=True,
+            key="baito_mapping_csv",
+        )
