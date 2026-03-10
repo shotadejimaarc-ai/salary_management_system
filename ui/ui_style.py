@@ -12,10 +12,6 @@ def apply_global_style():
         radial-gradient(700px 320px at 50% 60%, rgba(60,255,122,0.05), transparent 55%),
         linear-gradient(180deg, #0A0F18 0%, #070A10 65%, #05070C 100%) !important;
     }
-    /* ===== Streamlit Cloudの上部メニューを非表示 ===== */
-    header[data-testid="stHeader"]{
-        display: none;
-    }
 
     /* コンテンツ幅/余白（任意：見た目安定） */
     .block-container{
@@ -33,7 +29,6 @@ def apply_global_style():
       border-right: 1px solid rgba(255,255,255,0.08);
     }
 
-    /* サイドバー外枠の最上部余白をかなり詰める */
     section[data-testid="stSidebar"] > div:first-child{
       padding-top: 0px !important;
     }
@@ -41,7 +36,6 @@ def apply_global_style():
       padding-top: 0rem !important;
     }
 
-    /* サイドバー内部余白 */
     section[data-testid="stSidebar"] .block-container{
       padding-top: 0.35rem !important;
       padding-left: 0.9rem !important;
@@ -49,7 +43,6 @@ def apply_global_style():
       padding-bottom: 1rem !important;
     }
 
-    /* Streamlit標準ページ一覧を消す */
     section[data-testid="stSidebar"] nav,
     section[data-testid="stSidebar"] [data-testid="stSidebarNav"],
     section[data-testid="stSidebar"] [aria-label="Sidebar navigation"],
@@ -58,7 +51,6 @@ def apply_global_style():
       display: none !important;
     }
 
-    /* サイドバー内のタイトル・見出し系の余白を詰める */
     section[data-testid="stSidebar"] h1,
     section[data-testid="stSidebar"] h2,
     section[data-testid="stSidebar"] h3,
@@ -66,7 +58,6 @@ def apply_global_style():
       margin-top: 0 !important;
     }
 
-    /* サイドバーの見出し（###） */
     section[data-testid="stSidebar"] h3{
       margin: 0.65rem 0 0.20rem 0 !important;
       font-size: 0.95rem;
@@ -74,14 +65,12 @@ def apply_global_style():
       letter-spacing: 0.04em;
     }
 
-    /* 区切り線 */
     section[data-testid="stSidebar"] hr{
       border: none;
       border-top: 1px solid rgba(255,255,255,0.10);
       margin: 0.65rem 0 0.75rem 0 !important;
     }
 
-    /* 自作メニュー（page_link）の見た目を「高級ボタン化」 */
     section[data-testid="stSidebar"] a{
       display:block;
       padding: 10px 12px;
@@ -122,7 +111,6 @@ def apply_global_style():
       transform: translateY(-1px) !important;
     }
 
-    /* ボタンのフォーカス枠が派手なら抑える */
     div.stButton > button:focus{
       outline: none !important;
       box-shadow: 0 0 0 2px rgba(60,255,122,0.15) !important;
