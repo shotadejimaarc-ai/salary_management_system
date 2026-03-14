@@ -1,3 +1,5 @@
+st.set_page_config(page_title="給与管理システム", layout="wide")
+
 from ui.ui_style import apply_global_style
 apply_global_style()
 
@@ -9,7 +11,6 @@ from pathlib import Path
 from datetime import date
 from db import fetch_one, fetch_all
 
-st.set_page_config(page_title="給与管理システム", layout="wide")
 
 from ui.loading import show_loading, clear_loading
 
@@ -98,11 +99,11 @@ def get_last_confirmed_at():
     return (row or {}).get("last_confirmed_at")
 progress.progress(20)
 def get_sales_total(target_month: str):
-    # payments.paid_at から月次売上を集計
+    # payments.business_date から月次売上を集計
     row = fetch_one("""
         SELECT COALESCE(SUM(total_amount), 0) AS total
         FROM public.payments
-        WHERE to_char(paid_at AT TIME ZONE 'Asia/Tokyo', 'YYYY-MM') = %(ym)s
+        WHERE to_char(business_date, 'YYYY-MM') = %(ym)s
     """, {"ym": target_month})
     return safe_int((row or {}).get("total"))
 
