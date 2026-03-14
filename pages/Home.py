@@ -325,7 +325,7 @@ with col4:
         <div class="dash-label">M OVER M</div>
         <div class="dash-value">{sales_diff_text}</div>
         <div class="dash-sub">
-            前月（{prev_month_ym}）比
+            前々月（{prev_month_ym}）比
         </div>
     </div>
     """, unsafe_allow_html=True)
