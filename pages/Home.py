@@ -1,15 +1,16 @@
-st.set_page_config(page_title="給与管理システム", layout="wide")
-
-from ui.ui_style import apply_global_style
-apply_global_style()
-
-from ui.sidebar import render_sidebar
-render_sidebar()
-
 import streamlit as st
 from pathlib import Path
 from datetime import date
 from db import fetch_one, fetch_all
+
+st.set_page_config(page_title="給与管理システム", layout="wide")
+
+from ui.ui_style import apply_global_style
+from ui.sidebar import render_sidebar
+from ui.loading import show_loading, clear_loading
+
+apply_global_style()
+render_sidebar()
 
 
 from ui.loading import show_loading, clear_loading
