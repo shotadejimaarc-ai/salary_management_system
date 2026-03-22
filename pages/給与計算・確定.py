@@ -487,7 +487,7 @@ if st.session_state.get("payslip_pdf"):
 months_df = fetch_df("""
 select distinct target_month
 from (
-  select target_month from public.v_staff_net_salary where target_month is not null
+  select target_month from public.v_staff_net_salary_v2 where target_month is not null
   union
   select target_month from public.v_baito_salary where target_month is not null
 ) t
@@ -737,7 +737,7 @@ elif current_tab == "スタッフ給与":
       child_baito_deduction,
       rent,
       total_salary
-    from public.v_staff_net_salary
+    from public.v_staff_net_salary_v2
     where target_month = :m
     order by total_salary desc
     """, {"m": target_month_date})
@@ -1075,7 +1075,7 @@ elif current_tab == "✅ 確定情報":
     # =========================================================
     expected_staff = fetch_df("""
     select staff_id::text as staff_id, 'staff'::text as staff_type, name
-    from public.v_staff_net_salary
+    from public.v_staff_net_salary_v2
     where target_month = :m
     """, {"m": target_month_date})
 
