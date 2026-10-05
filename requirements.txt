@@ -7,3 +7,4 @@ reportlab
 XlsxWriter
 openpyxl
 Pillow
+psycopg[binary]
